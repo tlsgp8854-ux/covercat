@@ -500,9 +500,14 @@ const ACT = {
   c3(b) { pressOnly('[data-act=c3]', b); timers.push(setTimeout(() => finishCheck({ ...cur.p, score: b.dataset.v }), 260)); },
   retake() { S.test = fresh().test; S.done = false; S.levels = null; save(); reset('meet'); },
   wipe() { if (ACT._armed) { if (S.user) dropAccount(acctKey(S.user)); localStorage.removeItem(KEY); S = fresh(); ACT._armed = false; reset('meet'); } else { ACT._armed = true; toast(isWeb() ? 'Click again to erase everything' : 'Tap again to erase everything'); setTimeout(() => ACT._armed = false, 3000); } },
-  share() {
-    const text = shareText();
-    if (navigator.share) navigator.share({ title: 'My fear profile', text }).catch(() => {});
+  async share() {
+    // the image card: share sheet on phones, a download elsewhere; the text version only if drawing failed
+    const file = SHARE_FILE || (SHARE_IMG ? await SHARE_IMG : null), text = shareText();
+    const save = () => { const a = document.createElement('a'), u = URL.createObjectURL(file); a.href = u; a.download = file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); toast('Card saved as an image'); };
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'My fear profile' }).catch(e => { if (e && e.name === 'NotAllowedError') save(); });
+    } else if (file) save();
+    else if (navigator.share) navigator.share({ title: 'My fear profile', text }).catch(() => {});
     else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard'), () => toast('Could not copy'));
     else toast('Sharing is not available here');
   },
@@ -562,6 +567,70 @@ function finishCheck(p) {
 function shareText() {
   const L = S.levels || {};
   return `My fear type on CoverCat: ${fearType()}\n` + ORDER.map(g => `${GEN[g].n}: ${'★'.repeat(L[g] || 1)}${'☆'.repeat(3 - (L[g] || 1))}`).join('\n') + `\nCourage LV ${courage()}`;
+}
+
+/* Share card as an image: the same card as the share screen, drawn on a 1080x1350 canvas (4:5, fits most feeds).
+   It is drawn when the share screen opens, so tapping Share can hand the file over right away
+   (iOS only allows sharing straight from a tap). Phones get the share sheet with the image; elsewhere it downloads */
+let SHARE_IMG = null, SHARE_FILE = null;
+const CARD_FONTS = ['italic 900 60px "Barlow Condensed"', 'italic 700 40px "Barlow Condensed"', '400 60px Anton', '700 40px Archivo'];
+async function drawShareCard() {
+  try { await Promise.all(CARD_FONTS.map(f => document.fonts.load(f))); } catch (e) {}
+  const cat = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'cats/ready.svg'; });
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'), L = S.levels || {};
+  const FD = '"Barlow Condensed", "Arial Narrow", sans-serif', FN = 'Anton, Impact, sans-serif', FB = 'Archivo, system-ui, sans-serif';
+  const rrect = (X, Y, w, h, r) => { x.beginPath(); x.roundRect ? x.roundRect(X, Y, w, h, r) : x.rect(X, Y, w, h); };
+  // background: the big-moment gradient with the two diagonal bands
+  const bg = x.createLinearGradient(0, 0, W * .55, H); bg.addColorStop(0, '#1F6BFF'); bg.addColorStop(.6, '#0A1A5E'); bg.addColorStop(1, '#04103F');
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  x.save(); x.translate(W / 2, H * .44); x.rotate(-12 * Math.PI / 180);
+  x.globalAlpha = .12; x.fillStyle = '#F2F6FF'; x.fillRect(-W, -150, W * 2, 300);
+  x.globalAlpha = 1; x.fillStyle = '#7FF0FF'; x.fillRect(-W, 190, W * 2, 26); x.restore();
+  // kicker plate
+  const kick = (t, X, Y) => { x.font = `italic 700 30px ${FD}`; const w = x.measureText(t).width + 44;
+    x.save(); x.translate(X, Y); x.transform(1, 0, -Math.tan(11 * Math.PI / 180), 1, 0, 0); x.fillStyle = '#050A1E'; x.fillRect(0, 0, w, 50); x.restore();
+    x.fillStyle = '#7FF0FF'; x.textBaseline = 'middle'; x.fillText(t, X + 20, Y + 26); };
+  kick('YOUR FEAR PROFILE', 76, 92);
+  // white card
+  const CX = 70, CY = 172, CW = W - 140, CH = 1000, P = 56;
+  x.fillStyle = '#F2F6FF'; rrect(CX, CY, CW, CH, 40); x.fill();
+  x.textBaseline = 'alphabetic'; x.fillStyle = '#1F6BFF'; x.font = `italic 700 32px ${FD}`; x.fillText('MY FEAR PROFILE', CX + P, CY + 76);
+  // fear type in ransom letters (same looks and rotations as ransom())
+  const text = fearType(), looks = [['#F2F6FF', '#050A1E', FD, '900', 'italic'], ['#1F6BFF', '#F2F6FF', FN, '400', 'normal'],
+    ['#050A1E', '#7FF0FF', FD, '900', 'italic'], ['#7FF0FF', '#04103F', FB, '700', 'normal'], ['#0A1A5E', '#F2F6FF', FN, '400', 'normal']];
+  const layout = base => { let i = 0, X = 0; const out = [];
+    text.split(' ').forEach((w, wi) => { if (wi) X += base * .3;
+      for (const ch of w) { const Lk = looks[(i * 3 + hash(text)) % looks.length], r = ((i * 7) % 11) - 5; i++;
+        const size = base * (0.85 + (i % 3) * 0.1); x.font = `${Lk[4]} ${Lk[3]} ${size}px ${Lk[2]}`;
+        const cw = x.measureText(ch).width + size * .16; out.push({ ch, Lk, r, size, X, cw }); X += cw - size * .04; } });
+    return { out, w: X }; };
+  let base = 104, R = layout(base); const maxW = CW - P * 2;
+  if (R.w > maxW) { base = Math.floor(base * maxW / R.w); R = layout(base); }
+  const RY = CY + 120 + base * .62;
+  R.out.forEach(o => { const h = o.size * 1.05; x.save(); x.translate(CX + P + o.X + o.cw / 2, RY); x.rotate(o.r * Math.PI / 180);
+    x.fillStyle = o.Lk[0]; x.fillRect(-o.cw / 2, -h / 2, o.cw, h);
+    x.fillStyle = o.Lk[1]; x.font = `${o.Lk[4]} ${o.Lk[3]} ${o.size}px ${o.Lk[2]}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(o.ch, 0, o.size * .04); x.restore(); });
+  // five genre rows with stars
+  x.textAlign = 'left'; let Y = RY + base * .62 + 40;
+  ORDER.forEach(g => { const n = L[g] || 1;
+    x.fillStyle = '#050A1E'; x.font = `italic 900 50px ${FD}`; x.textBaseline = 'middle'; x.fillText(GEN[g].n.toUpperCase(), CX + P, Y + 46);
+    x.font = `44px ${FB}`; x.textAlign = 'right';
+    x.fillStyle = 'rgba(5,10,30,.2)'; x.fillText('★'.repeat(3 - n), CX + CW - P, Y + 46);
+    const dimW = 3 - n ? x.measureText('★'.repeat(3 - n)).width + 6 : 0;
+    x.fillStyle = '#1F6BFF'; x.fillText('★'.repeat(n), CX + CW - P - dimW, Y + 46); x.textAlign = 'left';
+    x.fillStyle = 'rgba(5,10,30,.12)'; x.fillRect(CX + P, Y + 88, CW - P * 2, 3); Y += 90; });
+  // foot: Courage LV and a tilted Peek
+  const FY = CY + CH - 56;
+  x.fillStyle = '#050A1E'; x.textBaseline = 'alphabetic'; x.font = `italic 700 40px ${FD}`; x.fillText('Courage LV', CX + P, FY);
+  const lw = x.measureText('Courage LV ').width; x.save(); x.translate(CX + P + lw, FY); x.transform(1, 0, -Math.tan(8 * Math.PI / 180), 1, 0, 0);
+  x.font = `400 76px ${FN}`; x.fillText(String(courage()), 0, 0); x.restore();
+  if (cat) { const ch = 210, cw = ch * cat.width / cat.height; x.save(); x.translate(CX + CW - P - cw / 2, CY + CH - 30 - ch / 2); x.rotate(6 * Math.PI / 180);
+    x.shadowColor = '#050A1E'; x.shadowOffsetX = 8; x.shadowOffsetY = 8; x.drawImage(cat, -cw / 2, -ch / 2, cw, ch); x.restore(); }
+  // wordmark
+  x.textBaseline = 'alphabetic'; x.font = `italic 900 56px ${FD}`; const a = x.measureText('COVER').width, b = x.measureText('CAT').width, sx = (W - a - b) / 2;
+  x.fillStyle = '#F2F6FF'; x.fillText('COVER', sx, H - 76); x.fillStyle = '#7FF0FF'; x.fillText('CAT', sx + a, H - 76);
+  return new Promise(res => c.toBlob(b => res(b && new File([b], 'covercat-fear-profile.png', { type: 'image/png' })), 'image/png'));
 }
 
 /* ---------- screens ---------- */
@@ -929,6 +998,7 @@ const SCREENS = {
 
 /* ---------- screen behaviour after render ---------- */
 const AFTER = {
+  share() { SHARE_FILE = null; SHARE_IMG = drawShareCard().then(f => (SHARE_FILE = f)).catch(() => null); },
   detail(p, sc) {
     const s = sc.querySelector('.scroll'), h = sc.querySelector('.dhead'), top = sc.querySelector('.dtop');
     const upd = () => top.classList.toggle('solid', s.scrollTop > h.offsetHeight - top.offsetHeight - 8);
