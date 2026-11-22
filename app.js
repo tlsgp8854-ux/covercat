@@ -576,7 +576,13 @@ let SHARE_IMG = null, SHARE_FILE = null;
 const CARD_FONTS = ['italic 900 60px "Barlow Condensed"', 'italic 700 40px "Barlow Condensed"', '400 60px Anton', '700 40px Archivo'];
 async function drawShareCard() {
   try { await Promise.all(CARD_FONTS.map(f => document.fonts.load(f))); } catch (e) {}
-  const cat = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = 'cats/ready.svg'; });
+  // CoverCat drawn flat first (no shadow), sized from its viewBox. Safari would shadow every stroke if the shadow went on the SVG itself
+  const cat = await (async () => { try {
+    let svg = await (await fetch('cats/ready.svg')).text(); const vb = (svg.match(/viewBox="([^"]+)"/) || [])[1], [, , vw, vh] = (vb || '0 0 300 360').split(/[ ,]+/).map(Number);
+    const h = 420, w = Math.round(h * vw / vh); svg = svg.replace(/<svg\b[^>]*>/, m => m.replace(/\s(width|height)="[^"]*"/g, '').replace('<svg', `<svg width="${w}" height="${h}"`));
+    const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+    const o = document.createElement('canvas'); o.width = w; o.height = h; o.getContext('2d').drawImage(im, 0, 0, w, h); return o;
+  } catch (e) { return null; } })();
   const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d'), L = S.levels || {};
   const FD = '"Barlow Condensed", "Arial Narrow", sans-serif', FN = 'Anton, Impact, sans-serif', FB = 'Archivo, system-ui, sans-serif';
@@ -626,7 +632,7 @@ async function drawShareCard() {
   const lw = x.measureText('Courage LV ').width; x.save(); x.translate(CX + P + lw, FY); x.transform(1, 0, -Math.tan(8 * Math.PI / 180), 1, 0, 0);
   x.font = `400 76px ${FN}`; x.fillText(String(courage()), 0, 0); x.restore();
   if (cat) { const ch = 210, cw = ch * cat.width / cat.height; x.save(); x.translate(CX + CW - P - cw / 2, CY + CH - 30 - ch / 2); x.rotate(6 * Math.PI / 180);
-    x.shadowColor = '#050A1E'; x.shadowOffsetX = 8; x.shadowOffsetY = 8; x.drawImage(cat, -cw / 2, -ch / 2, cw, ch); x.restore(); }
+    x.shadowColor = '#050A1E'; x.shadowOffsetX = 8; x.shadowOffsetY = 8; x.shadowBlur = 0; x.drawImage(cat, -cw / 2, -ch / 2, cw, ch); x.restore(); }
   // wordmark
   x.textBaseline = 'alphabetic'; x.font = `italic 900 56px ${FD}`; const a = x.measureText('COVER').width, b = x.measureText('CAT').width, sx = (W - a - b) / 2;
   x.fillStyle = '#F2F6FF'; x.fillText('COVER', sx, H - 76); x.fillStyle = '#7FF0FF'; x.fillText('CAT', sx + a, H - 76);
@@ -736,7 +742,7 @@ const SCREENS = {
     <div class="courage"><span class="lbl l">Courage LV <span class="num">${courage()}</span></span>
       <span class="bar" role="img" aria-label="${xp} of 2 films to the next level"><i style="width:${xp * 50 + 8}%"></i></span><span class="small">${pl(2 - xp, 'more film', 'more films')}</span></div>
     <div class="gtabs home-tabs" role="tablist" aria-label="Genre">${ORDER.map(k => `<button class="gtab ${k === g ? 'on' : ''}" role="tab" data-act="sel" data-g="${k}" aria-selected="${k === g}">${GEN[k].n}</button>`).join('')}</div>
-    <button class="home-lv" data-go="level" data-g="${g}" aria-label="${GEN[g].n} level ${S.levels[g]} of 3. Change it"><span class="lbl l">${GEN[g].n}</span>${stars(S.levels[g])}<span class="cyan">Change ›</span></button>
+    <div class="home-lv"><span class="lbl l">${GEN[g].n}</span>${stars(S.levels[g])}<button class="link cyan home-ch" data-go="level" data-g="${g}" aria-label="Change your ${GEN[g].n} level">Change ›</button></div>
     <div class="scroll">
       ${sec('In your zone', list.length ? `<button class="more" data-go="zone"><span class="num">${list.length}</span> ${list.length === 1 ? 'film' : 'films'} ›</button>` : '')}
       ${list.length ? `<div class="row3 zone-grid">${list.slice(0, 12).map(f => poster(f)).join('')}</div>` : empty('Nothing here yet. Watch something a little easier and CoverCat will open this up.')}

@@ -813,5 +813,5 @@ button.al-ftime{color:inherit;text-align:right}
 .home-lv{flex:none;display:flex;align-items:center;gap:8px;min-height:36px;margin-top:2px;font-size:var(--fs-small);color:var(--t2)}
 .home-lv .lbl{color:var(--t1)}
 .home-lv .stars{color:var(--moon)}
-.home-lv .cyan{margin-left:4px;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl)}
+.home-ch{margin-left:auto;min-height:var(--touch);padding:0 2px;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl)}
 .gtabs::after{content:"";flex:0 0 calc(var(--pad) - 4px)}
