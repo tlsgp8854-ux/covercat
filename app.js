@@ -38,6 +38,9 @@ let S = load();
 // Web (1024px and up) is handled in web.js: it sets route, webURL and webStart
 const isWeb = () => matchMedia('(min-width:1024px)').matches;
 let route = (n, p) => [n, p], webURL = () => {}, webStart = null;
+document.addEventListener('input', e => {
+  if (e.target.id === 'afq') { AF.q = e.target.value; const r = app.querySelector('#afres'), all = app.querySelector('#afall'); r.innerHTML = afResults(AF.q); app.querySelector('.sf-clear').hidden = !AF.q; r.hidden = !AF.q.trim(); all.hidden = !!AF.q.trim(); }
+});
 function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); if (v && v.test) return Object.assign(fresh(), v); } catch (e) {} return fresh(); }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (S.user) putAccount(acctKey(S.user), S); }
 // Accounts (simulated, no server): each account's progress is kept in this browser under its email or name.
@@ -253,7 +256,8 @@ function plotHtml(s) {
   const cut = s.slice(0, PLOT_MAX).replace(/\s+\S*$/, '').replace(/[,;:.\s]+$/, '');
   return `<p class="txt t2 plot"><span class="p-short">${esc(cut)}… </span><span class="p-full">${esc(s)} </span><button class="link cyan more-inline" data-act="more" aria-expanded="false">More</button></p>`;
 }
-let AF = { g: 'all', fit: null, lv: '0', sort: 'pop' }; // All films list (phone)
+let AF = { g: 'all', fit: null, lv: '0', sort: 'pop', q: '' };
+const afResults = q => { const r = searchFilms(q); return r.length ? `<p class="lbl l sres-n">${pl(r.length, 'film')}</p><div class="row3 sres-grid">${r.map(resultCard).join('')}</div>` : `<div class="sres-none"><b class="d">We don't have this one yet</b><span class="small t2">Try another title, or clear the search to browse.</span></div>`; };
 // Next level card: one layout in three states (locked films / filters block them / all open). Web uses the same parts
 const NL_ICON = {
   lock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
@@ -330,10 +334,33 @@ const ICON = {
   bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/></svg>',
   eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
+  share: '<svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 12v8h14v-8"/></svg>',
+  dots: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="18.5" r="1.6"/></svg>',
+  install: '<svg viewBox="0 0 24 24"><path d="M12 4v10M7.5 9.5L12 14l4.5-4.5M5 16v3h14v-3"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
   pencil: '<svg viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/></svg>',
   play: '<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>',
   pause: '<svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>'
 };
+// Install as an app. Chrome and Android give us an install prompt; iPhone needs Share then Add to Home Screen
+let INSTALL_EVT = null;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; });
+addEventListener('appinstalled', () => { INSTALL_EVT = null; S.instHint = true; save(); });
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const canInstall = () => !standalone();
+// Search: film titles, ignoring filters, each result with its verdict for you
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, '');
+const searchFilms = q => { const n = norm(q.trim()); if (!n) return []; return FILMS.filter(f => norm(f.t).includes(n)).sort((a, b) => norm(a.t).indexOf(n) - norm(b.t).indexOf(n)).slice(0, 30); };
+function verdict(f) {
+  if (!S.done) return null; if (!S.levels) computeLevels();
+  const g = S.sel && f.g.includes(S.sel) ? S.sel : mainG(f), L = capFor(f, g);
+  return blocked(f) ? ['red', 'Not for you'] : f.lv < L ? ['cyan', 'Inside your zone'] : f.lv === L ? ['moon', 'At your edge'] : ['red', 'Above your zone'];
+}
+const resultCard = f => { const v = verdict(f); return `<div class="rcard">${poster(f)}${v ? `<span class="rv ${v[0]}">${v[1]}</span>` : ''}</div>`; };
+const resultRow = (f, go = 'detail') => { const v = verdict(f);
+  return `<button class="srow-f" data-go="${go}" data-id="${f.id}"><span class="sf-p" style="${posterBg(f.id)}">${art(f)}</span><span class="sf-t"><b>${esc(f.t)}</b><span class="small t3">${f.y} ${stars(f.lv)}</span></span>${v ? `<span class="vchip ${v[0]}"><span>${v[1]}</span></span>` : ''}</button>`; };
 const BOOKMARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>';
 // After the first scare check, Peek offers to save progress once. Accounts are UI only for now
 const afterCheck = () => S.offered ? 'home' : 'savepro';
@@ -383,6 +410,7 @@ function go(name, p = {}, push = true) {
   if (sc.classList.contains('flow')) [sc, sc.querySelector(':scope>.scroll')].forEach(el => el && el.addEventListener('scroll', () => sc.classList.toggle('scrolled', el.scrollTop > 2), { passive: true }));
   // Genre tab rows: keep the chosen tab in view
   sc.querySelectorAll('.gtabs').forEach(r => { const o = r.querySelector('.gtab.on'); if (o) r.scrollLeft = o.offsetLeft - (r.clientWidth - o.offsetWidth) / 2; });
+  if (name === 'allfilms' && p.search) { const i = sc.querySelector('#afq'); if (i) setTimeout(() => i.focus(), 60); }
   if (AFTER[name]) AFTER[name](p, sc);
   if (isWeb()) webURL(name, p);
   const h = sc.querySelector('h1,h2,.focus'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
@@ -463,6 +491,18 @@ const ACT = {
   mlogout() { logOut(); reset('meet'); toast('Logged out'); },
   meetgo() { const n = document.getElementById('nick'); S.name = n ? n.value.trim().slice(0, 20) : ''; save(); go('tGenres'); },
   afg(b) { AF.g = b.dataset.v; refresh(); },
+  afclear() { AF.q = ''; refresh(); const i = app.querySelector('#afq'); if (i) i.focus(); },
+  async install() {
+    S.instHint = true; save();
+    if (INSTALL_EVT) { INSTALL_EVT.prompt(); try { await INSTALL_EVT.userChoice; } catch (e) {} INSTALL_EVT = null; refresh(); return; }
+    const ios = isIOS();
+    app.querySelector('.screen').insertAdjacentHTML('beforeend', `<div class="av-ov" role="dialog" aria-label="Install CoverCat"><button class="av-scrim" data-act="afclose" aria-label="Close"></button>
+      <div class="av-sheet glass inst-sheet"><div class="inst-head"><img class="inst-app" src="icons/icon-192.png" alt=""><h2 class="d h2">Install CoverCat</h2></div><p class="desc">${ios ? 'Two taps in Safari and it lives on your home screen.' : 'Add it from your browser menu and it opens like an app.'}</p>
+        <ol class="inst-steps"><li><span class="inst-ic">${ios ? ICON.share : ICON.dots}</span><span>${ios ? 'Tap <b>Share</b> at the bottom of Safari' : 'Open the browser <b>menu</b>'}</span></li>
+          <li><span class="inst-ic">${ios ? ICON.plus : ICON.install}</span><span>Choose <b>${ios ? 'Add to Home Screen' : 'Install app'}</b></span></li></ol>
+        <button class="link cyan" data-act="afclose">Got it</button></div></div>`);
+  },
+  instno() { S.instHint = true; save(); const b = app.querySelector('.inst'); if (b) b.remove(); },
   afsheet() {
     const o = (k, v, l) => `<button class="srow" role="radio" aria-checked="${AF[k] === v}" data-act="afset" data-k="${k}" data-v="${v}"><span>${l}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>`;
     app.querySelector('.screen').insertAdjacentHTML('beforeend', `<div class="av-ov" role="dialog" aria-label="Sort and level"><button class="av-scrim" data-act="afclose" aria-label="Close"></button>
@@ -741,9 +781,10 @@ const SCREENS = {
       <button class="avatar" data-go="profile" aria-label="Profile">${avatarImg()}</button></div>
     <div class="courage"><span class="lbl l">Courage LV <span class="num">${courage()}</span></span>
       <span class="bar" role="img" aria-label="${xp} of 2 films to the next level"><i style="width:${xp * 50 + 8}%"></i></span><span class="small">${pl(2 - xp, 'more film', 'more films')}</span></div>
+    <button class="sfield" data-go="allfilms" data-search="1"><span class="sf-ic" aria-hidden="true">${ICON.search}</span><span>Search ${FILMS.length} films</span></button>
     <div class="gtabs home-tabs" role="tablist" aria-label="Genre">${ORDER.map(k => `<button class="gtab ${k === g ? 'on' : ''}" role="tab" data-act="sel" data-g="${k}" aria-selected="${k === g}">${GEN[k].n}</button>`).join('')}</div>
     <div class="home-lv"><span class="lbl l">${GEN[g].n}</span>${stars(S.levels[g])}<button class="link cyan home-ch" data-go="level" data-g="${g}" aria-label="Change your ${GEN[g].n} level">Change ›</button></div>
-    <div class="scroll">
+    <div class="scroll">${!S.instHint && canInstall() ? `<div class="inst glass"><img class="inst-app" src="icons/icon-192.png" alt=""><span class="inst-t"><b>Keep CoverCat on your home screen</b><span class="small t2">Opens like an app, full screen.</span></span><button class="btn2 sm inline" data-act="install">Install</button><button class="inst-x" data-act="instno" aria-label="Not now">${ICON.x}</button></div>` : ''}
       ${sec('In your zone', list.length ? `<button class="more" data-go="zone"><span class="num">${list.length}</span> ${list.length === 1 ? 'film' : 'films'} ›</button>` : '')}
       ${list.length ? `<div class="row3 zone-grid">${list.slice(0, 12).map(f => poster(f)).join('')}</div>` : empty('Nothing here yet. Watch something a little easier and CoverCat will open this up.')}
       ${unlockCard(g, L, next)}
@@ -766,11 +807,15 @@ const SCREENS = {
     if (AF.sort === 'calm') list = [...list].sort((a, b) => a.scare - b.scare);
     if (AF.sort === 'scary') list = [...list].sort((a, b) => b.scare - a.scare);
     const n = (AF.lv !== '0') + (AF.sort !== 'pop');
+    const q = AF.q || '';
     return `${topbar()}<div class="scroll">${head('Browse', 'All films', 'Every film, rated for scaredy-cats.')}
+      <div class="sfield is-input"><span class="sf-ic" aria-hidden="true">${ICON.search}</span><input id="afq" type="text" inputmode="search" enterkeyhint="search" placeholder="Search a film" autocomplete="off" value="${esc(q)}" aria-label="Search films"><button class="sf-clear" data-act="afclear" aria-label="Clear search" ${q ? '' : 'hidden'}>${ICON.x}</button></div>
+      <div id="afres" ${q ? '' : 'hidden'}>${afResults(q)}</div>
+      <div id="afall" ${q ? 'hidden' : ''}>
       <div class="gtabs" role="group" aria-label="Genre">${[['all', 'All'], ...ORDER.map(k => [k, GEN[k].n])].map(([v, l]) => `<button class="gtab ${AF.g === v ? 'on' : ''}" data-act="afg" data-v="${v}" aria-pressed="${AF.g === v}">${l}</button>`).join('')}</div>
       ${S.done ? `<button class="switch af-fit" role="switch" aria-checked="${AF.fit}" data-act="aff"><span>Only films that fit me</span><span class="knob" aria-hidden="true"></span></button>` : ''}
       <div class="af-bar"><span class="lbl l">${pl(list.length, 'film')}</span><button class="btn2 sm inline" data-act="afsheet">Sort &amp; level${n ? ` · ${n}` : ''}</button></div>
-      ${list.length ? `<div class="row3 mt">${list.map(f => poster(f)).join('')}</div>` : empty('No films match. Try another genre.')}</div>`;
+      ${list.length ? `<div class="row3 mt">${list.map(f => poster(f)).join('')}</div>` : empty('No films match. Try another genre.')}</div></div>`;
   },
   filters() {
     // Fear settings: the filters from the fear test, changed in place
@@ -839,6 +884,7 @@ const SCREENS = {
       <div class="list glass">
         ${S.user ? '' : '<button class="lrow" data-go="signin"><span class="grow txt">Create account or log in</span><span class="chev" aria-hidden="true">›</span></button>'}
         <button class="lrow" data-go="share"><span class="grow txt">Share my fear profile</span><span class="chev" aria-hidden="true">›</span></button>
+        ${canInstall() ? '<button class="lrow" data-act="install"><span class="grow txt">Install CoverCat</span><span class="chev" aria-hidden="true">›</span></button>' : ''}
         <button class="lrow" data-go="filters"><span class="grow txt">Fear settings</span><span class="chev" aria-hidden="true">›</span></button>
         <button class="lrow" data-act="retake"><span class="grow txt">Retake the fear test</span><span class="chev" aria-hidden="true">›</span></button>
         ${S.user ? '<button class="lrow" data-act="mlogout"><span class="grow txt warn">Log out</span></button>' : ''}

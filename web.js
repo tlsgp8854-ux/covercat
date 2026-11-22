@@ -61,6 +61,9 @@ addEventListener('popstate', () => { if (!isWeb() || !FILMS.length) return; cons
 matchMedia('(min-width:1024px)').addEventListener('change', () => { if (cur && FILMS.length) { const c = cur; stack = []; cur = null; go(c.name, c.p, false); } });
 
 /* ---------- shared pieces ---------- */
+// QR code (qrcode.min.js) to open a page on the phone
+const siteURL = (h = '') => location.origin + location.pathname + h;
+function qrSvg(url) { try { const q = qrcode(0, 'M'); q.addData(url); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (e) { return ''; } }
 const guest = () => !S.user;
 const showLanding = () => !S.done || (!S.user && S.lo); // no fear test yet (or logged out): the landing page
 const lv = () => { if (!S.levels) computeLevels(); return S.levels; };
@@ -76,12 +79,13 @@ function whead(nav) {
           <button role="menuitem" data-go="wProfile">Profile</button><button role="menuitem" data-go="wSettings">Settings</button><span class="wh-sep" role="separator"></span><button role="menuitem" class="wh-out" data-act="wlogout">Log out</button></div></div>`
     : `<button class="wh-login" data-go="wAuth" data-mode="login">Log in</button><button class="wh-signup" data-go="wAuth" data-mode="signup"><span>Sign up</span></button>`;
   return `<header class="webhead"><div class="wh-in"><button class="wh-logo" data-go="wHome" aria-label="CoverCat home">Cover<span>Cat</span></button>
-    <nav class="wh-nav">${links}</nav><div class="wh-right">${right}</div></div></header>`;
+    <nav class="wh-nav">${links}</nav><div class="wh-right"><div class="sfield is-input wh-sf"><span class="sf-ic" aria-hidden="true">${ICON.search}</span><input id="whq" type="text" inputmode="search" placeholder="Search films" autocomplete="off" value="${esc(WF.q || '')}" aria-label="Search films"><button class="sf-clear" data-act="whclear" aria-label="Clear search" ${WF.q ? '' : 'hidden'}>${ICON.x}</button></div>${right}</div></div></header>`;
 }
 const wfoot = () => `<footer class="wfoot"><div class="wf-in">
   <div class="wf-brand"><div class="wh-logo">Cover<span>Cat</span></div><p class="small">Horror for people who love horror but scare easily.</p></div>
   <div class="wf-col"><span class="lbl s t3">Explore</span><button data-go="wFilms">Films</button><button data-act="wtest">Fear test</button><button data-act="whow">How it works</button></div>
   <div class="wf-col"><span class="lbl s t3">Account</span>${S.user ? '<button data-go="wProfile">Profile</button><button data-go="wSettings">Settings</button>' : '<button data-go="wAuth" data-mode="login">Log in</button><button data-go="wAuth" data-mode="signup">Sign up</button>'}</div>
+  <div class="wf-qr"><span class="wf-qr-c">${qrSvg(siteURL())}</span><span><b class="d">Get it on your phone</b><span class="small t3">Scan to open CoverCat. No app store needed.</span>${INSTALL_EVT && !standalone() ? '<button class="link cyan" data-act="install">Install on this computer</button>' : ''}</span></div>
   <div class="wf-small small"><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p><p>© 2026 CoverCat · Designed and built by Hailey</p><p>Hyper Island DC27 individual project</p></div></div></footer>`;
 const page = (nav, body, cls = '') => `${whead(nav)}<main class="wmain ${cls}">${body}</main>${wfoot()}`;
 const bd = f => f && f.poster ? `<div class="wbd" aria-hidden="true"><img src="${IMG}w780${f.poster}" alt="" crossorigin="anonymous" onerror="this.remove()"></div>` : '<div class="wbd" aria-hidden="true"></div>';
@@ -122,6 +126,7 @@ Object.assign(ACT, {
     if (!n) { toast('Add your name'); return; } if (m && !/.+@.+\..+/.test(m)) { toast('Check your email'); return; }
     S.user.name = n; S.name = n; S.user.email = m; save(); refresh(); toast('Saved'); },
   wemail() { const v = (app.querySelector('#ws-email') || {}).value || ''; if (!/.+@.+\..+/.test(v)) { toast('Add a valid email'); return; } S.user.email = v.trim(); save(); refresh(); toast('Email saved'); },
+  whclear() { WF.q = ''; if (cur.name === 'wFilms') refresh(); else { const i = app.querySelector('#whq'); i.value = ''; app.querySelector('.wh-sf .sf-clear').hidden = true; } const i = app.querySelector('#whq'); if (i) i.focus(); },
   wfclear() { WF = { g: 'all', lv: '0', fit: !!S.done, sort: 'pop' }; refresh(); }
 });
 const _finish = ACT.finish; ACT.finish = () => { S.lo = false; _finish(); };
@@ -133,7 +138,14 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') app.querySel
 app.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.wauth-form')) { e.preventDefault(); ACT.wauth(); } });
 
 /* ---------- pages ---------- */
-let WF = { g: 'all', lv: '0', fit: null, sort: 'pop' };
+let WF = { g: 'all', lv: '0', fit: null, sort: 'pop', q: '' };
+const wfResults = q => { const r = searchFilms(q); return r.length ? `<div class="wsr-head"><h2 class="d h2 wsec-h"><span>Results for “${esc(q.trim())}”</span></h2><span class="small t2">${pl(r.length, 'film')}</span></div><div class="wgrid">${r.map(f => `<div class="rcard">${wposter(f)}${(v => v ? `<span class="rv ${v[0]}">${v[1]}</span>` : '')(verdict(f))}</div>`).join('')}</div>` : `<div class="sres-none"><b class="d">We don't have this one yet</b><span class="small t2">Try another title, or clear the search to browse.</span></div>`; };
+document.addEventListener('input', e => {
+  if (e.target.id !== 'whq') return;
+  WF.q = e.target.value; const c = app.querySelector('.wh-sf .sf-clear'); if (c) c.hidden = !WF.q;
+  if (!cur || cur.name !== 'wFilms') { const pos = e.target.selectionStart; go('wFilms', {}); const i = app.querySelector('#whq'); if (i) { i.focus(); i.setSelectionRange(pos, pos); } return; }
+  const r = app.querySelector('#wfres'), all = app.querySelector('#wfall'), on = !!WF.q.trim(); r.innerHTML = wfResults(WF.q); r.hidden = !on; all.hidden = on;
+});
 Object.assign(SCREENS, {
   wHome() { return showLanding() ? landing() : personal(); },
 
@@ -153,7 +165,9 @@ Object.assign(SCREENS, {
     const changed = WF.g !== 'all' || WF.lv !== '0' || WF.sort !== 'pop' || WF.fit !== !!S.done;
     const sum = [WF.g !== 'all' && GEN[WF.g].n, WF.lv !== '0' && '★'.repeat(+WF.lv), WF.fit && 'Fits me'].filter(Boolean).join(' · ');
     return page('wFilms', `
-      <div class="wtitle">${kick('All films')}<h1 class="d wh1">Films</h1><p class="txt t2">${FILMS.length} horror films, each one rated for how scary it really is.</p></div>
+      <div class="wtitle"><div>${kick('All films')}<h1 class="d wh1">Films</h1><p class="txt t2">${FILMS.length} horror films, each one rated for how scary it really is.</p></div></div>
+      <div id="wfres" ${WF.q ? '' : 'hidden'}>${wfResults(WF.q || '')}</div>
+      <div id="wfall" ${WF.q ? 'hidden' : ''}>
       <div class="wfilters">
         <div class="wf-tabs" role="group" aria-label="Genre">${tab('all', 'All')}${ORDER.map(g => tab(g, GEN[g].n, S.done ? stars(lv()[g]) : '')).join('')}</div>
       </div>
@@ -166,7 +180,7 @@ Object.assign(SCREENS, {
           ${sel('sort', 'Sort', [['pop', 'Popular'], ['calm', 'Least scary first'], ['scary', 'Scariest first']])}
         </div>
       </div>
-      ${list.length ? `<div class="wgrid">${list.map(f => wposter(f)).join('')}</div>` : `<div class="wempty">${empty('No films match these filters.')}</div>`}`);
+      ${list.length ? `<div class="wgrid">${list.map(f => wposter(f)).join('')}</div>` : `<div class="wempty">${empty('No films match these filters.')}</div>`}</div>`);
   },
 
   wFilm(p) {
@@ -202,6 +216,7 @@ Object.assign(SCREENS, {
               : `<button class="qa" data-go="check1" data-id="${f.id}" data-seen="1">${ICON.eye}<span>Seen it</span></button>`}
             <button class="qa" data-act="notforme" data-id="${f.id}">${ICON.x}<span>Not for me</span></button>
           </div>
+          ${st.length ? `<div class="ws-qr"><span class="ws-qr-c">${qrSvg(siteURL('#/film/' + f.id))}</span><span class="small t2">Jump alerts work best on your phone. Scan to open this film there.</span></div>` : ''}
         </aside>
       </div>
       <section class="wsec"><h2 class="d h2 wsec-h"><span>The scare</span></h2>
