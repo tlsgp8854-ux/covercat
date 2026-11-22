@@ -1,0 +1,809 @@
+/* Peek · design system (rules in .claude/CLAUDE.md, "Design system").
+   Everyday screens are calm and readable; Persona accents go on navigation and the four big moments
+   (BOO!, Result, LEVEL UP!, Share). Every screen uses these tokens and classes, no one-off colors, sizes or radii. */
+@font-face{font-family:"Barlow Condensed";font-style:italic;font-weight:600;font-display:swap;src:url(fonts/barlow-condensed-latin-600-italic.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-style:italic;font-weight:700;font-display:swap;src:url(fonts/barlow-condensed-latin-700-italic.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-style:italic;font-weight:900;font-display:swap;src:url(fonts/barlow-condensed-latin-900-italic.woff2) format("woff2")}
+@font-face{font-family:"Anton";font-weight:400;font-display:swap;src:url(fonts/anton-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Archivo";font-weight:400;font-display:swap;src:url(fonts/archivo-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Archivo";font-weight:700;font-display:swap;src:url(fonts/archivo-latin-700-normal.woff2) format("woff2")}
+
+/* ---------- tokens ---------- */
+:root{
+  /* color */
+  --ink:#050A1E; --deep:#04103F; --navy:#0A1A5E; --dlg-bg:rgba(10,26,94,.85); --elec:#1F6BFF; --sky:#2FB8FF; --cyan:#7FF0FF; --moon:#FFE45C; --moon-on-white:#D9A800;
+  --red:#FF2A4F; --red-deep:#C80F38; --peach:#F6C99B; --drop:#D8143A;
+  --t1:#F2F6FF; --t2:#C3CDE6; --t3:#93A1C6; --t-splash:#5E6E9A; --splash-bg:#081649; --t-ink-dim:rgba(5,10,30,.2);
+  --glass:rgba(20,40,110,.55); --glass-soft:rgba(20,40,110,.35); --glass-sel:rgba(127,240,255,.10); --scrim:rgba(5,10,30,.75);
+  --line:rgba(190,210,255,.22); --line-strong:rgba(255,255,255,.4); --track:rgba(255,255,255,.14); --star-off:rgba(255,255,255,.22);
+  --bg:radial-gradient(420px 360px at 85% 0%,rgba(47,140,255,.45),transparent 70%),radial-gradient(380px 300px at 0% 100%,rgba(31,107,255,.25),transparent 70%),linear-gradient(180deg,#0E2366 0%,#081649 45%,#050C2C 100%);
+  --bg-moment:linear-gradient(160deg,#1F6BFF 0%,#0A1A5E 60%,#04103F 100%);
+  --bg-warn:linear-gradient(160deg,#FF2A4F 0%,#B0103A 70%,#5A0820 100%);
+  /* type */
+  --f-d:"Barlow Condensed","Arial Narrow",sans-serif; --f-b:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif; --f-n:"Anton","Impact",sans-serif;
+  --fs-h1:32px; --fs-h2:21px; --fs-card:24px; --fs-btn:22px;
+  --fs-lbl-s:13px; --fs-lbl:15px; --fs-lbl-l:17px;
+  --fs-body:16px; --fs-dialog:17px; --fs-desc:14px; --fs-small:13px; --lh:1.4;
+  /* shape */
+  --r:16px; --r-s:14px; --r-poster:10px; --r-plate:4px; --r-pill:999px;
+  --skew:-11deg; --unskew:11deg;
+  /* spacing (4px grid) */
+  --pad:20px; --gap:10px; --sec:24px; --touch:44px;
+  /* hard offset shadows: Peek, primary buttons and the selected plate only */
+  --hard:6px 6px 0 var(--elec); --hard-ink:6px 6px 0 var(--ink); --hard-plate:5px 4px 0 var(--elec);
+  --peek-shadow:drop-shadow(6px 5px 0 var(--elec)); --peek-shadow-ink:drop-shadow(7px 6px 0 var(--ink));
+  /* motion: screens fade, things inside react */
+  --t-enter:150ms; --t-react:300ms; --ease:cubic-bezier(.2,.7,.3,1);
+  color-scheme:dark;
+}
+
+/* ---------- base ---------- */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#030816;color:var(--t1);font-family:var(--f-b);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input{font:inherit;color:inherit;background:none;border:0;text-align:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--moon);outline-offset:3px}
+[tabindex="-1"]:focus{outline:none}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#app{position:relative;container-type:size;max-width:430px;height:100%;margin:0 auto;overflow:hidden;background:var(--bg)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) var(--pad) calc(env(safe-area-inset-bottom,0px) + 20px);
+  animation:enter var(--t-enter) var(--ease) both}
+.screen.still{animation:none}
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;margin:0 calc(-1 * var(--pad));padding:0 var(--pad) 8px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.grow{flex:1;min-height:0;min-width:0}
+.mt{margin-top:16px} .mt-s{margin-top:8px} .center{text-align:center} .block{display:block}
+
+/* ---------- motion ---------- */
+/* between screens: a quick fade, nothing else */
+@keyframes enter{from{opacity:0}to{opacity:1}}
+/* react: small squash-and-stretch */
+.react{animation:react var(--t-react) var(--ease)}
+@keyframes react{0%{transform:scale(1.08,.9)}55%{transform:scale(.96,1.05)}100%{transform:none}}
+/* selection highlight slides in diagonally */
+@keyframes plate-in{from{opacity:0;transform:skewX(var(--skew)) translate(-12px,6px)}to{opacity:1;transform:skewX(var(--skew))}}
+
+/* ---------- type ---------- */
+.d{font-family:var(--f-d);font-style:italic;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;line-height:.95}
+.h1{font-size:var(--fs-h1)}
+.h2{font-size:var(--fs-h2)}
+.h3{font-size:var(--fs-card)}
+.lbl{font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl);line-height:1.15}
+.lbl.s{font-size:var(--fs-lbl-s)}
+.lbl.l{font-size:var(--fs-lbl-l)}
+.up{text-transform:uppercase}
+.txt{font-size:var(--fs-body);line-height:var(--lh)}
+.desc{font-size:var(--fs-desc);line-height:var(--lh);color:var(--t2)}
+.small{font-size:var(--fs-small);line-height:1.35;color:var(--t3)}
+.b{font-weight:700}
+.t1{color:var(--t1)} .t2{color:var(--t2)} .t3{color:var(--t3)} .cyan{color:var(--cyan)} .elec{color:var(--elec)} .ink{color:var(--ink)} .warn{color:var(--red)}
+.num{font-family:var(--f-n);font-weight:400;font-style:normal;line-height:1;display:inline-block;transform:skewX(-8deg)}
+.nowrap{white-space:nowrap}
+.fit1{white-space:nowrap;overflow:hidden}
+.stars{color:var(--moon);letter-spacing:.08em;white-space:nowrap;font-style:normal;font-size:var(--fs-small)}
+.stars .dim{color:var(--star-off)}
+.stars.l{font-size:var(--fs-lbl-l)}
+
+/* ---------- surfaces ---------- */
+.glass{background:var(--glass);border:1px solid var(--line);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.card{position:relative;border-radius:var(--r);padding:14px 16px}
+.card + .card{margin-top:var(--gap)}
+.stack{display:flex;flex-direction:column;gap:var(--gap)}
+.row{display:flex;align-items:center;gap:var(--gap)}
+.between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+
+/* ---------- navigation accents ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:var(--touch);flex:none}
+.top .back,.top .skip{display:flex;align-items:center;min-height:var(--touch);min-width:var(--touch);font-size:var(--fs-body);color:var(--t2)}
+.top .skip{justify-content:flex-end}
+.prog{display:flex;gap:5px}
+.prog i{width:26px;height:4px;border-radius:4px;background:rgba(255,255,255,.18)}
+.prog i.on{background:var(--cyan)}
+/* kicker plate above screen titles */
+.kick{align-self:flex-start;flex:none;display:inline-block;transform:skewX(var(--skew));background:var(--ink);padding:3px 12px;margin-top:16px}
+.kick>span{display:block;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-s);letter-spacing:.06em;color:var(--cyan);text-transform:uppercase;white-space:nowrap}
+.title{margin-top:10px;overflow-wrap:break-word}
+.sub{margin-top:6px}
+/* section title with a short cyan slanted underline */
+.sec{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:var(--sec) 0 var(--gap)}
+.sec h2{position:relative;padding-bottom:8px}
+.sec h2::after{content:"";position:absolute;left:2px;bottom:0;width:40px;height:4px;transform:skewX(var(--skew));background:var(--cyan)}
+.sec .more{display:flex;align-items:flex-end;gap:4px;min-height:var(--touch);padding-bottom:6px;font-size:var(--fs-small);color:var(--t3);white-space:nowrap}
+.sec .more .num{font-size:17px;color:var(--t1)}
+/* tab bar with the slanted selected tab */
+.tabs{flex:none;display:flex;gap:10px;margin:auto calc(-1 * var(--pad)) calc(-1 * (env(safe-area-inset-bottom,0px) + 20px));
+  padding:10px 24px calc(env(safe-area-inset-bottom,0px) + 20px);background:var(--scrim);border-top:1px solid var(--line)}
+.tabs button{flex:1;position:relative;isolation:isolate;min-height:var(--touch);font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-l);color:var(--t3);text-align:center}
+.tabs button[aria-current]{color:var(--ink);font-weight:900}
+.tabs button[aria-current]::before{content:"";position:absolute;inset:0;z-index:-1;transform:skewX(var(--skew));background:var(--t1);border-radius:3px;box-shadow:var(--hard-plate);animation:plate-in var(--t-react) var(--ease)}
+.tabs button[aria-current]::after{content:"";position:absolute;left:-7px;top:9px;bottom:9px;width:4px;transform:skewX(var(--skew));background:var(--cyan)}
+
+/* ---------- buttons ---------- */
+/* primary: slanted parallelogram with a hard shadow; red only on big moments */
+.btn{position:relative;display:block;flex:none;width:calc(100% - 12px);height:54px;margin:0 6px 6px 0;transform:skewX(var(--skew));
+  background:var(--t1);border-radius:var(--r-plate);box-shadow:var(--hard);transition:transform 120ms,box-shadow 120ms}
+.btn>span{display:grid;place-items:center;height:100%;padding:0 18px;transform:skewX(var(--unskew));
+  font-family:var(--f-d);font-style:italic;font-weight:900;font-size:var(--fs-btn);text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden}
+.btn:active{transform:skewX(var(--skew)) translate(3px,3px);box-shadow:3px 3px 0 var(--elec)}
+.btn.red{background:var(--red);box-shadow:var(--hard-ink)}
+.btn.red>span{color:var(--t1)}
+.btn.red:active{box-shadow:3px 3px 0 var(--ink)}
+/* secondary: rounded outline, no shadow */
+.btn2{display:grid;place-items:center;width:100%;min-height:52px;padding:0 16px;border-radius:var(--r-s);border:1.5px solid var(--line-strong);background:var(--glass-soft);
+  font-family:var(--f-d);font-style:italic;font-weight:900;font-size:20px;text-transform:uppercase;color:var(--t1);white-space:nowrap;text-align:center}
+.btn2.sm{min-height:var(--touch);font-size:var(--fs-lbl-l)}
+.btn2:active{transform:scale(.98)}
+/* small slanted outline button ("How") */
+.btn2.sm.inline{flex:none;width:auto;min-height:40px;padding:0 16px;font-size:var(--fs-lbl)} /* small rounded secondary (home Adjust / How) */
+.link{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:var(--touch);padding:0 4px;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-l);color:var(--cyan);white-space:nowrap;text-decoration:none} /* every tappable text link: cyan, label font, italic */
+.link.cyan{color:var(--cyan)}
+.link.warn{color:var(--red)}
+.actions{flex:none;margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:4px}
+.actions.off{visibility:hidden}
+.screen.flow{overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.screen.flow::-webkit-scrollbar{display:none}
+/* fixed top bar: sticks to the top edge (over the safe area) with a soft fade under it; it takes its own space,
+   so nothing scrolls hidden behind it */
+.screen.flow>.top{position:sticky;isolation:isolate;top:calc(-1 * (env(safe-area-inset-top,0px) + 12px));z-index:6;
+  margin:calc(-1 * (env(safe-area-inset-top,0px) + 12px)) calc(-1 * var(--pad)) 0;padding:calc(env(safe-area-inset-top,0px) + 12px) var(--pad) 14px;
+}
+.screen.flow>.top::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(to bottom,#0D2163 0,#0D2163 calc(100% - 16px),rgba(13,33,99,0) 100%);opacity:0;transition:opacity var(--t-enter)}
+.screen.flow.scrolled>.top::before{opacity:1} /* the bar's background shows once content scrolls under it */
+.screen.flow>.top+*{margin-top:0}
+/* screens with their own scroll area (genres, seen): soft fades at its top and bottom edges */
+.screen.flow>.scroll{-webkit-mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(transparent,#000 14px,#000 calc(100% - 14px),transparent);padding-top:6px;padding-bottom:14px}
+/* pinned bottom button: sticks to the screen's bottom edge, covers the safe area, content fades out under it */
+.screen.flow>.actions{position:sticky;bottom:calc(-1 * (env(safe-area-inset-bottom,0px) + 20px));z-index:5;margin:auto calc(-1 * var(--pad)) calc(-1 * (env(safe-area-inset-bottom,0px) + 20px));
+  padding:22px var(--pad) calc(env(safe-area-inset-bottom,0px) + 16px);background:linear-gradient(rgba(5,12,44,0),rgba(5,12,44,.92) 22px)}
+.actions .link{align-self:center}
+
+/* ---------- inputs and selection states ---------- */
+.input{display:block;width:100%;min-height:52px;padding:0 16px;border-radius:var(--r-s);background:var(--glass-soft);border:1px solid var(--line);font-family:var(--f-b);font-size:var(--fs-body);color:var(--t1)}
+.input::placeholder{color:var(--t3);opacity:1}
+.input:focus{outline:none;border-color:var(--cyan)}
+/* single-choice rows with a radio */
+.opts{flex:none;display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:12px 16px;border-radius:var(--r-s);font-size:var(--fs-body);font-weight:700;line-height:1.3;text-align:left;transition:border-color var(--t-react),background var(--t-react)}
+.opt .radio{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line-strong);transition:border var(--t-react) var(--ease)}
+.opt[aria-pressed="true"]{background:var(--glass-sel);border-color:var(--cyan)}
+.opt[aria-pressed="true"] .radio{border:6px solid var(--cyan)}
+/* multi-choice pills */
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:var(--touch);padding:0 16px;border-radius:var(--r-pill);border:1.5px solid var(--line-strong);font-size:var(--fs-desc);font-weight:700;color:var(--t2);white-space:nowrap}
+.pill[aria-pressed="true"]{background:var(--t1);border-color:var(--t1);color:var(--ink)}
+.pill[aria-pressed="true"]::before{content:"✓"}
+.opts.pills{flex-direction:row;flex-wrap:wrap}
+.crows{flex:none;display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.crow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:52px;padding:0 16px;border-radius:var(--r-s);font-size:var(--fs-body);font-weight:700;text-align:left;transition:border-color var(--t-react),background var(--t-react)}
+.crow .tick{position:static;flex:none}
+.crow[aria-pressed="true"]{background:var(--glass-sel);border:1.5px solid var(--cyan)}
+.crow[aria-pressed="true"] .tick{background:var(--cyan);border-color:var(--cyan)}
+/* genre cards */
+.gcard{display:block;width:100%;text-align:left;border-radius:var(--r);padding:14px 56px 14px 16px;position:relative;transition:border-color var(--t-react),background var(--t-react)}
+.gcard + .gcard{margin-top:var(--gap)}
+.gcard .desc{margin-top:2px}
+.gcard .pills,.gcard .small{margin-right:-40px} /* below the tick, so they can use the full width */
+.gcard .pills{margin-top:12px;gap:6px;flex-wrap:nowrap;font-size:13px;max-width:calc(100% + 40px)} /* one row inside the card; the text scales down (data-fit) rather than overflow */
+.gcard .pill{flex:none;min-height:28px;padding:0 10px;font-size:inherit;gap:3px}
+.gcard .pill[aria-pressed="true"]::before{font-size:.92em}
+.gcard .small{font-size:12px;color:var(--t3)}
+.gcard .small{margin-top:10px}
+.gcard.on{background:var(--glass-sel);border:1.5px solid var(--cyan)}
+.gcard.on::before{content:"";position:absolute;left:-1px;top:14px;bottom:14px;width:5px;border-radius:0 3px 3px 0;background:var(--cyan)}
+.tick{position:absolute;right:16px;top:16px;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line-strong);display:grid;place-items:center;font-size:15px;font-weight:700;color:var(--ink)}
+.on>.tick,.tick.on{background:var(--cyan);border-color:var(--cyan)}
+/* on/off switch */
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:var(--touch);font-size:var(--fs-body);font-weight:700;text-align:left}
+.switch .knob{flex:none;position:relative;width:46px;height:28px;border-radius:var(--r-pill);background:rgba(255,255,255,.18);transition:background var(--t-react)}
+.switch .knob::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:var(--t1);transition:transform var(--t-react) var(--ease)}
+.switch[aria-checked="true"] .knob{background:var(--elec)}
+.switch[aria-checked="true"] .knob::after{transform:translateX(18px)}
+
+/* ---------- Peek and the speech bubble ---------- */
+/* Peek is always shown whole: sized from the space it gets, never cropped */
+/* Peek stands on a full-width dialogue box (feet over its top edge), right of the PEEK tag.
+   The scene takes the free height; Peek grows up to 250px and shrinks on short screens, leftover space splits above and below */
+.scene{flex:none;display:flex;flex-direction:column;margin-top:10px} /* plain column: kicker / Peek / dialogue / answers / button, nothing overlaps */
+.screen .scene+*{margin-top:16px} /* 16px between the dialogue box and whatever follows, on every Peek screen */
+/* Peek's area has a fixed height per screen size (never shrinks), so Peek keeps its size when the line changes.
+   Screens with more answers use .compact */
+.scene-peek{position:relative;z-index:2;container-type:size;flex:none;height:min(250px,28cqh);display:flex;align-items:flex-end;padding-left:96px;margin-bottom:-14px;pointer-events:none}
+.pk{position:relative;display:block;height:min(100cqh,calc(100cqw / var(--ar,.92)))}
+.pk-in{position:relative;display:block;height:100%;aspect-ratio:var(--ar);transform-origin:50% 100%}
+.pk-img{position:absolute}
+.pk-img>img,.pk-img>svg.cat{display:block;width:100%;height:100%;filter:var(--peek-shadow)}
+/* Peek's dialogue box: deeper navy than the answer rows plus a 2px cyan line on top, so it reads as Peek talking */
+.dlg{position:relative;z-index:1;flex:none;border-radius:var(--r);padding:24px 18px 16px;background:var(--dlg-bg);border-top:2px solid var(--cyan)}
+.dlg p{font-size:var(--fs-dialog);font-weight:700;line-height:1.4;min-height:2.8em} /* two lines, so 1 to 2 line messages never grow the box */
+.scene.compact .scene-peek{height:min(200px,21cqh)}
+.scene.mid .scene-peek{height:min(250px,25cqh)} /* blood: four answers and a button */
+.scene.tight .scene-peek{height:min(180px,calc(26cqh - 94px))} /* scare check 2: five rows under the card */
+.nametag{position:absolute;left:14px;top:-13px;transform:skewX(var(--skew));background:var(--ink);padding:3px 14px 2px}
+.nametag>span{display:block;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:900;font-size:var(--fs-lbl-l);letter-spacing:.02em;color:var(--t1)}
+.caret{display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-2px;background:var(--cyan);animation:blink 900ms steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+/* Peek reactions */
+.pk.shake .pk-in{animation:react var(--t-react) var(--ease),shake 100ms 320ms 6 alternate ease-in-out}
+@keyframes shake{from{transform:translateX(-3px) rotate(-1.2deg)}to{transform:translateX(3px) rotate(1.2deg)}}
+.pk.chill .pk-in{animation:react var(--t-react) var(--ease),sway 2.6s 1s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(0)}30%{transform:rotate(-3deg)}70%{transform:rotate(2.5deg)}}
+.pk.proud .pk-in{animation:react var(--t-react) var(--ease),proud var(--t-react) 520ms ease-out}
+@keyframes proud{40%{transform:translateY(-6px) scale(1.03,.98)}75%{transform:translateY(1px)}}
+.pk.react-in .pk-in{animation:react var(--t-react) var(--ease)}
+.pk.swap .drop{--drop-delay:.3s}
+.pk.float .pk-in{animation:float 3.2s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-2px)}}
+/* band-aid on sit-2: sticks with a small squash */
+.aid{transform-box:fill-box;transform-origin:center;animation:aid var(--t-react) 200ms var(--ease) both}
+@keyframes aid{0%{opacity:0;transform:scale(1.25) rotate(-6deg)}45%{opacity:1;transform:scale(1.12,.8)}75%{transform:scale(.96,1.05)}100%{opacity:1;transform:none}}
+/* syrup drop: falls from the top of the screen, splats, fades */
+.dropat{position:absolute;width:0;height:0;z-index:2}
+.drop{position:absolute;left:-9px;bottom:-2px;width:18px;height:25px;opacity:0;transform-origin:50% 100%;animation:drip 1.5s var(--drop-delay,.45s) both}
+@keyframes drip{0%{opacity:1;transform:translateY(-70cqh) scale(.9,1.2);animation-timing-function:cubic-bezier(.5,0,1,.5)}
+  38%{opacity:1;transform:translateY(0) scale(.9,1.15);animation-timing-function:ease-out}
+  46%{transform:translateY(3px) scale(1.9,.42)}56%{transform:translateY(3px) scale(1.6,.5)}85%{opacity:1;transform:translateY(3px) scale(1.6,.5)}
+  100%{opacity:0;transform:translateY(5px) scale(1.5,.45)}}
+
+/* ---------- home ---------- */
+.hello{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+.hello .greet{flex:1;min-width:0}
+.hello .h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px}
+.avatar{flex:none;position:relative;width:52px;height:52px;border-radius:50%;overflow:hidden;background:rgba(127,240,255,.12);border:1px solid var(--line)}
+.avatar img{position:absolute;max-width:none} /* size and offset come from the head crop (CROP in app.js) */
+.avatar img.photo{inset:0;width:100%;height:100%;left:0;top:0;object-fit:cover}
+.avatar.big{width:64px;height:64px;margin-top:6px}
+.avatar.on{border:2px solid var(--cyan)}
+/* profile picture picker: bottom sheet */
+.av-ov{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;justify-content:flex-end}
+.av-scrim{position:absolute;inset:0;background:rgba(5,10,30,.6)}
+.av-sheet{position:relative;margin:0;border-radius:var(--r) var(--r) 0 0;padding:20px var(--pad) calc(env(safe-area-inset-bottom,0px) + 16px);background:var(--navy);display:flex;flex-direction:column;gap:8px;animation:enter var(--t-enter) var(--ease)}
+.av-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:8px 0 6px;justify-items:center}
+.av-grid .avatar{width:min(48px,100%);height:auto;aspect-ratio:1}
+.av-up{cursor:pointer}
+.av-sheet .link{align-self:center}
+.courage{display:flex;align-items:center;gap:var(--gap);margin-top:10px}
+.courage .lbl{flex:none;color:var(--t1);display:flex;align-items:baseline;gap:4px}
+.courage .lbl .num{font-size:18px}
+.courage .small{flex:none;color:var(--t2)}
+.bar{display:block;flex:1;min-width:24px;height:6px;border-radius:6px;background:var(--track);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:6px;background:var(--sky)}
+.menu{flex:none;display:flex;flex-direction:column;gap:2px;margin-top:16px}
+.mrow{position:relative;isolation:isolate;display:flex;align-items:center;height:var(--touch)}
+.mrow .mname{flex:1;min-width:0;height:100%;display:flex;align-items:center;padding-left:16px;text-align:left;
+  font-family:var(--f-d);font-style:italic;font-weight:900;font-size:var(--fs-h2);text-transform:uppercase;letter-spacing:-.01em;color:var(--t2);white-space:nowrap}
+.mrow .mstars{flex:none;height:100%;display:flex;align-items:center;padding:0 14px}
+.mrow.on::before{content:"";position:absolute;inset:0;z-index:-1;transform:skewX(var(--skew));background:var(--t1);border-radius:3px;box-shadow:var(--hard-plate);animation:plate-in var(--t-react) var(--ease)}
+.mrow.on::after{content:"";position:absolute;left:-8px;top:9px;bottom:9px;width:5px;transform:skewX(var(--skew));background:var(--cyan)}
+.mrow.on .mname{color:var(--ink)}
+.mrow.on .stars{color:var(--moon-on-white)}
+.mrow.on .stars .dim{color:var(--t-ink-dim)}
+.stat{display:flex;align-items:center;gap:14px;margin-top:12px;border-radius:var(--r-s);padding:12px 14px 12px 18px}
+.stat>.num{flex:none;font-size:40px}
+.stat .t{flex:1;min-width:0;font-size:var(--fs-small);line-height:1.35;color:var(--t2)}
+.stat .t b{display:block;font-size:var(--fs-desc);color:var(--t1)}
+
+/* ---------- posters ---------- */
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.poster{position:relative;display:flex;flex-direction:column;justify-content:flex-end;width:100%;aspect-ratio:2/3;padding:10px;border-radius:var(--r-poster);overflow:hidden;text-align:left}
+.poster::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 45%,rgba(3,6,20,.85))}
+.poster .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster .pt{position:relative;z-index:2;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-l);line-height:.95;text-transform:uppercase;overflow-wrap:break-word}
+.poster .pm{position:relative;z-index:2;display:flex;gap:6px;align-items:baseline;margin-top:4px;font-size:var(--fs-small);color:var(--t2);white-space:nowrap}
+.poster.has-art .pt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px 16px;text-align:center}
+.empty img{height:96px;filter:var(--peek-shadow)}
+
+/* ---------- lists (My films, profile, settings) ---------- */
+.seg{display:flex;gap:8px;margin-top:14px;flex:none}
+.seg .pill[aria-pressed="true"]::before{content:none}
+.list{border-radius:var(--r);overflow:hidden}
+.list>*+*{border-top:1px solid var(--line)}
+.lrow{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:12px 16px;text-align:left}
+.lrow .grow{display:flex;flex-direction:column;gap:3px}
+.lrow .chev{flex:none;color:var(--t3);font-size:var(--fs-lbl-l)}
+.mini{position:relative;flex:none;width:48px;height:72px;border-radius:8px;overflow:hidden}
+.mini .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tag{flex:none;display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:var(--r-pill);border:1.5px solid var(--line-strong);font-size:var(--fs-small);font-weight:700;color:var(--t2);white-space:nowrap}
+.tag.cyan{border-color:var(--cyan);color:var(--cyan)}
+.tag.moon{border-color:var(--moon);color:var(--moon)}
+.tag.red{border-color:var(--red);color:var(--red)}
+.tag.alert{gap:4px;background:rgba(255,42,79,.14);border-color:var(--red);color:var(--red)}
+.tag.fill{background:var(--cyan);border-color:var(--cyan);color:var(--ink)}
+.lvrow{display:block;width:100%;padding:12px 16px;text-align:left}
+.lvrow .bar{margin:8px 0 6px}
+.credit{margin:16px 0 8px}
+.status-head{display:flex;align-items:flex-start;justify-content:space-between}
+.status-type{margin-top:6px}
+.status-lv{display:grid;grid-template-columns:auto auto 1fr;align-items:end;column-gap:10px;margin-top:12px}
+.status-lv .lbl{padding-bottom:6px}
+.status-lv>.num{font-size:56px}
+.status-bar{display:flex;flex-direction:column;gap:6px;padding-bottom:6px;min-width:0}
+.status-bar .bar{flex:none;width:100%}
+.menu.plain{margin-top:0}
+
+/* ---------- level explainer ---------- */
+.lvcard.on{border:1.5px solid var(--cyan);background:var(--glass-sel)}
+.lvcard .head{display:flex;align-items:center;gap:var(--gap);flex-wrap:wrap}
+.lvcard .desc{margin-top:6px}
+.lvcard .small{margin:10px 0 6px}
+.lvcard .btn2{margin-top:12px}
+.just{animation:react var(--t-react) var(--ease)}
+
+/* ---------- fear test: seen grid ---------- */
+.seen-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px var(--gap);align-items:start}
+.sc{position:relative;min-width:0;container-type:inline-size}
+.sc-frame{position:relative}
+.sc .poster{border:2px solid transparent}
+.sc.on .poster{border-color:var(--cyan)}
+.badge{position:absolute;top:6px;right:6px;z-index:4;width:22px;height:22px;border-radius:50%;background:var(--cyan);color:var(--ink);display:grid;place-items:center;font-size:13px;font-weight:700}
+button.badge{top:-5px;right:-5px;width:44px;height:44px;border-radius:0;background:none} /* 44px touch area, 22px circle */
+button.badge>span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--cyan);color:var(--ink)}
+.sc-t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:6px 2px 0;min-height:2.3em;font-size:var(--fs-small);font-weight:700;line-height:1.15;color:var(--t2)}
+/* How was it: three slanted buttons stacked inside the checked poster over a dark overlay. Nothing below the poster
+   changes, so the grid never shifts. Taps on the overlay itself go through to the poster (uncheck) */
+.seen-rate{position:absolute;inset:2px;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding-top:16px;border-radius:calc(var(--r-poster) - 2px);background:rgba(5,10,30,.3);pointer-events:none}
+.schip{width:70%;height:26px;padding:0;transform:skewX(var(--skew));border:0;background:rgba(5,10,30,.55);color:var(--t1);pointer-events:auto}
+.schip>span{display:block;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:700;font-size:13px;line-height:26px;white-space:nowrap;text-align:center}
+.schip[aria-pressed="true"]{background:var(--t1);border-color:var(--t1);color:var(--ink)}
+.seen-rate.pop{animation:fadein var(--t-react) var(--ease)}
+/* the chosen reaction as a small slanted badge at the bottom of the poster; tap it to change */
+.seen-pick{position:absolute;left:50%;bottom:8px;z-index:3;height:24px;padding:0 10px;transform:translateX(-50%) skewX(var(--skew));background:var(--t1);color:var(--ink)}
+.seen-pick>span{display:block;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:700;font-size:13px;line-height:24px;white-space:nowrap}
+.seen-pick.pop{animation:pickin var(--t-react) var(--ease)}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes pickin{from{opacity:0;transform:translateX(-50%) skewX(var(--skew)) scale(.6)}to{opacity:1;transform:translateX(-50%) skewX(var(--skew)) scale(1)}}
+
+/* ---------- film detail ---------- */
+.plotbox{margin-top:16px}
+.dsec{margin-top:28px}
+.dsec>.kick{margin-top:0}
+/* THE SCARE: one game stat sheet. Score + meter on top, jump scares and gore below a thin divider */
+.sheet{margin-top:12px;border-radius:var(--r);padding:16px}
+.sheet-top{display:flex;align-items:center;gap:16px}
+.sheet-row{display:grid;grid-template-columns:1fr 1fr;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.sheet-cell{display:flex;flex-direction:column;min-width:0}
+.sheet-cell+.sheet-cell{border-left:1px solid var(--line);padding-left:16px}
+.sheet-cell .lbl{white-space:nowrap}
+.sheet-cell .num{font-size:30px;margin-top:2px;white-space:nowrap}
+.sheet-cell .num small{font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-s);color:var(--t2);margin-left:2px}
+.sheet-cell .small{margin-top:2px}
+.sheet-cell .nodata{margin-top:8px}
+/* jump bars: one per 10 minutes, big scares stacked red on top of the cyan part, busiest block highlighted */
+.jbars{display:flex;gap:3px;margin-top:10px}
+.jbars>div{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:132px;padding-bottom:20px}
+.jbars>div.busy::before{content:"";position:absolute;inset:0 -1px 18px;border-radius:6px;background:rgba(127,240,255,.14)}
+.jbars>div::after{content:"";position:absolute;left:0;right:0;bottom:20px;height:1px;background:var(--t3)}
+.jbars b{position:relative;font-family:var(--f-n);font-weight:400;font-size:var(--fs-small);line-height:1;margin-bottom:3px}
+.jbars .jb{position:relative;display:flex;flex-direction:column;width:100%;border-radius:3px 3px 0 0;background:var(--cyan);overflow:hidden}
+.jbars .jb i{display:block;flex:none;width:100%;background:var(--red)}
+.jbars small{position:absolute;bottom:0;font-size:12px;line-height:1.2;color:var(--t3);white-space:nowrap}
+.tl-key{display:flex;gap:16px;margin-top:6px}
+.tl-key span{display:inline-flex;align-items:center;gap:6px}
+.tl-key i{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--cyan)}
+.tl-key i.big{background:var(--red)}
+.plot .p-full{display:none}
+.plot.open .p-short{display:none}
+.plot.open .p-full{display:inline}
+.more-inline{display:inline;min-height:0;padding:0;font-size:inherit;font-family:var(--f-d);font-style:italic;font-weight:700}
+.browse-all{display:block;margin:14px auto 4px;min-height:var(--touch);padding:0 12px;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl);color:var(--cyan)}
+/* film detail: the scare in one card. Score, verdict and meter on top; jumps, gore and level in three columns */
+.mcard{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border-radius:var(--r)}
+.mt-top{display:flex;align-items:center;justify-content:space-between;width:100%}
+.mc-score{font-size:44px;line-height:1;color:var(--t1)}
+.mcard .num small{font-size:13px;color:var(--t3);margin-left:1px}
+.mcard .meter10{width:100%}
+.mcard .stars{color:var(--moon)}
+.m3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+.m3>div{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:0 12px}
+.m3>div:first-child{padding-left:0}
+.m3>div+div{border-left:1px solid var(--line)}
+.m3 .num{font-size:28px;line-height:1;color:var(--t1)}
+.m3 .num.nod{color:var(--t3)}
+.m3 .small{font-size:12px;line-height:1.3}
+.mt-stars{font-size:17px;line-height:28px}
+.mbar{display:block;width:100%;height:6px;margin-top:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}
+.mbar i{display:block;height:100%;transform:skewX(var(--skew));transform-origin:left;background:var(--sky)}
+/* quiet actions (Save, Seen it, Not for me): icon over an italic label, no box. Same on the phone and the web */
+.qacts{display:flex;justify-content:center;gap:12px;margin-top:20px}
+.qa{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:96px;padding:10px 8px;border-radius:12px;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl);color:var(--t2);transition:background 150ms ease,color 150ms ease}
+.qa svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.qa:active{background:rgba(127,240,255,.1);color:var(--t1)}
+@media (hover:hover){ .qa:hover{background:rgba(127,240,255,.08);color:var(--t1)} }
+.qa.wsave[aria-pressed="true"]{color:var(--cyan)}
+.qa.wsave[aria-pressed="true"] svg{fill:currentColor}
+.qa.wsave .on-t,.qa.wsave[aria-pressed="true"] .off-t{display:none}
+.qa.wsave[aria-pressed="true"] .on-t{display:inline}
+/* all films: genre tabs in one scrolling row, the selected one on the slanted white plate */
+.gtabs{display:flex;gap:4px;margin:16px calc(-1 * var(--pad)) 0;padding:4px var(--pad) 8px;overflow-x:auto;scrollbar-width:none}
+.gtabs::-webkit-scrollbar{display:none}
+.gtab{position:relative;isolation:isolate;flex:none;height:40px;padding:0 16px;font-family:var(--f-d);font-style:italic;font-weight:900;font-size:var(--fs-lbl-l);text-transform:uppercase;color:var(--t2)}
+.gtab.on{color:var(--ink)}
+.gtab.on::before{content:"";position:absolute;inset:0;z-index:-1;transform:skewX(var(--skew));background:var(--t1);border-radius:3px;box-shadow:var(--hard-plate)}
+.af-fit{margin-top:6px;font-size:var(--fs-desc)}
+.af-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}
+/* next level card icon (filters block it / all open) */
+.nl-ic{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ink);border:1px solid var(--line-strong)}
+.nl-ic svg{width:20px;height:20px;fill:none;stroke:var(--moon);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* home: what the next level opens, the locked films shown blurred */
+.munlock{display:flex;align-items:center;gap:14px;margin-top:16px;padding:14px 14px 14px 16px;border-radius:var(--r)}
+.mu-p{position:relative;flex:none;display:flex}
+.mu-p>div{position:relative;width:34px;aspect-ratio:2/3;margin-left:-12px;border-radius:5px;overflow:hidden;border:1.5px solid var(--deep)}
+.mu-p>div:first-child{margin-left:0;transform:rotate(-5deg)} .mu-p>div:last-of-type{transform:rotate(5deg)}
+.mu-p .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(2px) brightness(.55)}
+.mu-lock{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);border:1px solid var(--line-strong)}
+.mu-lock svg{width:14px;height:14px;fill:none;stroke:var(--moon);stroke-width:2.2}
+.mu-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mu-t .h3{font-size:19px;line-height:1.1}
+.mu-t .stars{color:var(--moon);font-style:normal}
+.more-btn{display:block;min-height:0;padding:2px 0 6px;font-size:var(--fs-small);line-height:1.2}
+.more-btn[hidden]{display:none}
+.stats3.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stats3 .nodata{display:block;margin-top:10px}
+.screen[data-s="detail"]{padding-top:0}
+.dhead{position:relative;flex:none;margin:0 calc(-1 * var(--pad));height:clamp(300px,52cqh,440px);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.dhead .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%}
+.dshade{position:absolute;inset:0;background:linear-gradient(rgba(4,16,63,.55),transparent 22%,transparent 46%,rgba(8,22,73,.9) 78%,#081649)}
+.roundbtn{display:grid;place-items:center;width:var(--touch);height:var(--touch);border-radius:50%;color:var(--t1);font-size:var(--fs-lbl-l)}
+/* detail header: back and bookmark plates fixed on top; the dark bar with the title fades in once the poster is gone */
+.dtop{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) var(--pad) 10px}
+.dtop::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(5,10,30,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);opacity:0;transition:opacity var(--t-enter)}
+.dtop-t{flex:1;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl);color:var(--t1);opacity:0;transition:opacity var(--t-enter)}
+.dtop.solid::before,.dtop.solid .dtop-t{opacity:1}
+/* detail action rows: glass list like Profile settings, a cyan line icon on the left */
+.dacts{margin-top:28px}
+.licon{flex:none;display:grid;place-items:center;width:24px;height:24px;color:var(--cyan)}
+.txt.one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.licon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dplate{display:block;height:var(--touch);min-width:var(--touch);transform:skewX(var(--skew));background:var(--ink)}
+.dplate>span{display:flex;align-items:center;justify-content:center;height:100%;padding:0 14px;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-l);color:var(--cyan);white-space:nowrap}
+.bmark svg{width:20px;height:20px;fill:none;stroke:var(--cyan);stroke-width:2;stroke-linejoin:round}
+.bmark[aria-pressed="true"] svg{fill:var(--moon);stroke:var(--moon)}
+.bmark.react svg{animation:react var(--t-react) var(--ease)}
+.dtext{position:relative;z-index:2;padding:0 var(--pad) 14px}
+.dtitle{overflow-wrap:break-word;line-height:.95}
+.dtext .lbl{margin-top:6px}
+.sp-score{flex:none;display:flex;flex-direction:column}
+.sp-score .num{font-size:48px;margin-top:2px}
+.sp-score small{font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl);color:var(--t2);margin-left:3px}
+.sp-meter{flex:1;min-width:0}
+.meter10{display:flex;gap:3px;height:22px}
+.meter10 span{flex:1;position:relative;border-radius:3px;overflow:hidden;background:var(--navy)}
+.meter10 i{position:absolute;inset:0 auto 0 0;background:var(--sky)}
+.meter10 i.over{background:var(--red)}
+.vchip{flex:none;display:inline-block;transform:skewX(var(--skew));padding:3px 10px 2px;color:var(--ink)}
+.vchip>span{display:block;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:900;font-size:var(--fs-lbl-s);text-transform:uppercase;letter-spacing:.02em;white-space:nowrap}
+.vchip.cyan{background:var(--cyan)} .vchip.moon{background:var(--moon)} .vchip.red{background:var(--red)}
+.sp-foot{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-top:10px}
+.stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap);margin-top:var(--gap)}
+.stats3>div{display:flex;flex-direction:column;justify-content:space-between;border-radius:var(--r-s);padding:10px 12px;min-width:0}
+.stats3 .lbl{display:block;white-space:nowrap} /* one-line labels, so the numbers share a baseline */
+.stats3 .num{display:block;font-size:26px;margin-top:4px;white-space:nowrap}
+.stats3 .num small{font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl-s);color:var(--t2);margin-left:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.sticky{flex:none;display:flex;gap:12px;align-items:center;margin:12px calc(-1 * var(--pad)) calc(-1 * (env(safe-area-inset-bottom,0px) + 20px));
+  padding:12px var(--pad) calc(env(safe-area-inset-bottom,0px) + 16px);background:var(--scrim);border-top:1px solid var(--line)}
+.sticky .btn2{flex:1;width:auto}
+.sticky .btn{flex:1.5;width:auto;margin-bottom:6px}
+
+/* ---------- score card, jump alerts ---------- */
+.al-film{display:flex;align-items:center;gap:14px;margin-top:12px}
+.al-thumb{position:relative;flex:none;width:56px;aspect-ratio:2/3;border-radius:8px;overflow:hidden}
+.al-thumb .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.al-start{margin-top:20px}
+.al-time{display:flex;align-items:center;gap:6px;margin-top:10px}
+.tbox{flex:1;min-width:0;height:52px;min-height:52px;padding:0;text-align:center;font-family:var(--f-n);font-size:28px;transform:none}
+.tbox::placeholder{color:var(--t3);opacity:.45}
+.al-colon{flex:none;font-family:var(--f-n);font-size:24px;color:var(--t3)}
+.al-info{margin-top:16px}
+/* timer screen */
+.al-top{position:relative;z-index:6;display:flex;align-items:center;gap:8px;min-height:var(--touch);flex:none}
+.al-top .back{display:flex;align-items:center;min-height:var(--touch);min-width:var(--touch);font-size:var(--fs-body);color:var(--t2)}
+.al-head{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.al-head .lbl{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.al-more{flex:none;width:var(--touch);height:var(--touch);font-size:24px;line-height:1;color:var(--t1)}
+.al-menu{display:none}
+.al-menu.open{display:block}
+.al-scrim{position:fixed;inset:0;z-index:0;background:transparent}
+.al-menu .list{position:absolute;right:0;top:calc(100% + 4px);z-index:1;min-width:180px;background:var(--dlg-bg)}
+.lchart{margin-top:0}
+/* timer: film card, ring, chart card, stop dialog */
+.al-fcard{display:flex;align-items:center;gap:12px;margin-top:8px;border-radius:var(--r);padding:10px 14px 10px 10px}
+.al-fcard .al-thumb{width:44px;height:64px}
+.al-fname{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.al-fname .lbl{text-transform:uppercase;letter-spacing:.04em}
+.al-ftime{flex:none;display:flex;flex-direction:column;align-items:flex-end}
+.al-ftime .num{font-size:24px}
+/* film time sits in a small field with a pencil, so it reads as editable */
+.al-tfield{display:inline-flex;align-items:center;gap:6px;margin:3px 0;padding:3px 6px 3px 8px;border:1px solid var(--line-strong);border-radius:8px;background:rgba(255,255,255,.06)}
+.al-tfield svg{width:14px;height:14px;fill:none;stroke:var(--t2);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.al-tfield.pulse{animation:fieldpulse 1.2s var(--ease) .4s 1}
+@keyframes fieldpulse{0%,100%{box-shadow:0 0 0 0 rgba(127,240,255,0);border-color:var(--line-strong)}40%{box-shadow:0 0 0 4px rgba(127,240,255,.35);border-color:var(--cyan)}}
+button.al-ftime{color:inherit;text-align:right}
+.al-fcard{flex-wrap:wrap}
+.al-tedit{flex:1 0 100%;padding-top:8px;border-top:1px solid var(--line)}
+.al-tedit[hidden]{display:none}
+.al-tedit .al-time{margin-top:0}
+.al-tbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.al-tbtns{align-items:start}
+.al-tbtns .btn{width:calc(100% - 6px);height:52px}
+.lbars{touch-action:none;cursor:pointer}
+.lnow.drag{transition:none}
+/* round handle on the NOW line so it reads as draggable; it grows a little while dragging */
+.lnow i{position:absolute;top:15px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--t1);box-shadow:0 0 0 2px var(--ink);transition:transform var(--t-react) var(--ease)}
+.lnow.drag i{transform:scale(1.35)}
+.al-ring{position:relative;width:min(230px,70cqw);aspect-ratio:1;margin:20px auto 0}
+.al-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.al-rtrack{fill:var(--ink);stroke:var(--navy);stroke-width:14}
+.al-rbar{fill:none;stroke:var(--cyan);stroke-width:14;stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.al-ring.big .al-rbar{stroke:var(--red)}
+.al-ring.done .al-rbar{opacity:0}
+.al-rin{position:absolute;inset:16%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}
+.al-rin .lbl{text-transform:uppercase;letter-spacing:.06em}
+.al-rin .num{font-size:clamp(44px,17cqw,64px);color:var(--t1);white-space:nowrap}
+.al-rin .num small{font-size:.3em;margin-left:.12em;font-family:var(--f-d);font-style:italic;font-weight:700;letter-spacing:.02em} /* "35 min": min small, same baseline */
+.al-rin .vchip[hidden]{display:none}
+.al-ring.done .al-rin .num{font-family:var(--f-d);font-style:italic;font-weight:900;text-transform:uppercase;font-size:22px;line-height:1.05;transform:none}
+.al-ccard{margin-top:20px;border-radius:var(--r);padding:10px 14px 10px}
+.al-stop{position:absolute;inset:0;z-index:66;display:flex;align-items:center;justify-content:center;padding:0 var(--pad)}
+.al-stop[hidden]{display:none}
+.al-stop .al-scrim{position:absolute;inset:0;background:rgba(5,10,30,.7)}
+.al-stopbox{position:relative;width:100%;border-radius:var(--r);padding:20px;background:var(--navy);display:flex;flex-direction:column;gap:10px}
+.al-stopbox .desc{margin-bottom:6px}
+.lbars{position:relative;display:flex;gap:3px;height:96px;padding-top:32px}
+.lbars>div{position:relative;flex:1;min-width:0;display:flex;align-items:flex-end;border-bottom:2px solid var(--track)}
+.lbars>div.past{opacity:.3}
+.lbars .jb{display:flex;flex-direction:column;width:100%;border-radius:3px 3px 0 0;background:var(--cyan);overflow:hidden}
+.lbars .jb i{display:block;flex:none;width:100%;background:var(--red)}
+.lnow{position:absolute;top:0;bottom:-4px;width:2px;margin-left:-1px;background:var(--t1);transition:left .25s linear}
+.lnow b{position:absolute;top:0;left:50%;transform:translateX(-50%);padding:1px 5px;background:var(--t1);color:var(--ink);font-family:var(--f-d);font-style:italic;font-weight:900;font-size:11px;text-transform:uppercase;line-height:1.3;white-space:nowrap}
+.laxis{position:relative;height:18px;margin-top:4px}
+.laxis small{position:absolute;top:0;transform:translateX(-50%);font-size:var(--fs-small);color:var(--t3);white-space:nowrap}
+.laxis small.first{transform:none}
+.laxis small.last{transform:translateX(-100%)}
+/* timer controls: one family, all 56px slanted plates; play/pause white and wider, the rest dark */
+.al-ctl{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:20px}
+.al-b{flex:1 1 0;min-width:0;max-width:60px;height:56px;transform:skewX(var(--skew));border-radius:var(--r-plate);background:var(--ink);border:1px solid var(--line-strong)}
+.al-b>span{display:grid;place-items:center;height:100%;transform:skewX(var(--unskew));font-family:var(--f-d);font-style:italic;font-weight:700;font-size:var(--fs-lbl);color:var(--t1);white-space:nowrap}
+.al-pp{flex:none;width:92px;height:56px;margin:0 4px 6px 4px;transform:skewX(var(--skew));background:var(--t1);border-radius:var(--r-plate);box-shadow:var(--hard)}
+.al-pp>span{display:grid;place-items:center;height:100%;transform:skewX(var(--unskew))}
+.al-pp svg{width:26px;height:26px;fill:var(--ink)}
+.al-pp:active{transform:skewX(var(--skew)) translate(3px,3px);box-shadow:3px 3px 0 var(--elec)}
+.al-k{margin-top:24px}
+.al-k>.kick{margin-top:0}
+.al-list{margin-top:10px}
+.al-row{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 16px}
+.al-row .num{font-size:20px;min-width:84px}
+.al-row .al-n{margin-left:auto}
+.al-row.past{opacity:.4}
+.al-end{margin-top:20px}
+.screen.warn{background:var(--bg-warn)}
+/* Heads up: a deeper red so white text keeps 4.5:1 or more; big white count that pops each second */
+.screen.alarm{background:linear-gradient(160deg,var(--red-deep) 0%,#8E0A2C 70%,#4A0618 100%);color:var(--t1)}
+.alarm .title{color:var(--t1)}
+.alarm .sub{color:var(--t1)}
+.hcd{display:block;font-size:120px;line-height:1;margin-top:4px;color:var(--t1)}
+.hcd.pop{animation:hpop 300ms var(--ease)}
+@keyframes hpop{0%{transform:skewX(-8deg) scale(1.35)}100%{transform:skewX(-8deg) scale(1)}}
+.hbig{align-self:flex-start;margin-top:8px;background:var(--t1);color:var(--red-deep)}
+.warn-peek{height:min(220px,30cqh);align-self:flex-end;margin-top:auto;filter:var(--peek-shadow-ink)}
+
+/* ---------- title and meet ---------- */
+/* Splash: solid navy, cat fades up, swaps to cantlook at .9s, wordmark at 1.2s. Base styles are the end frame */
+.splash{animation:none;background:var(--splash-bg);align-items:center;justify-content:center;padding:0;cursor:pointer;transition:opacity .35s ease}
+.splash.out{opacity:0}
+.sp-cat{position:relative;width:96px;height:115px;animation:sp-rise .5s var(--ease) both}
+.sp-cat img{position:absolute;left:0;bottom:0;width:100%;height:auto}
+.sp-a{opacity:0;animation:sp-off .18s linear .9s both}
+.sp-b{animation:sp-on .18s linear .9s both}
+.sp-word{margin-top:20px;font-family:var(--f-d);font-style:italic;font-weight:900;font-size:30px;line-height:1;text-transform:uppercase;color:var(--t1);animation:sp-on .45s ease 1.2s both}
+.sp-word span{color:var(--cyan)}
+.sp-c{position:absolute;left:0;right:0;bottom:calc(34px + env(safe-area-inset-bottom,0px));text-align:center;font-family:var(--f-b);font-size:11px;color:var(--t-splash)}
+@keyframes sp-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sp-on{from{opacity:0}to{opacity:1}}
+@keyframes sp-off{from{opacity:1}to{opacity:0}}
+.form{flex:none;display:flex;flex-direction:column;gap:6px;margin-top:12px}
+
+/* ---------- big moments: BOO!, Result, LEVEL UP!, Share ---------- */
+.screen.moment{background:var(--bg-moment)}
+.band{position:absolute;left:-80px;right:-80px;transform:rotate(-12deg);pointer-events:none}
+.band.white{background:var(--t1)}
+.band.cyan{background:var(--cyan)}
+.band.ink{background:var(--ink)}
+.tilt-peek{filter:var(--peek-shadow-ink);transform:rotate(6deg)}
+.ransom{display:flex;flex-wrap:wrap;align-items:center;column-gap:.3em;row-gap:.08em;padding:0 4px}
+.ransom.one{flex-wrap:nowrap}
+.ransom .rw{display:inline-flex;flex-wrap:nowrap;align-items:center}
+.ransom .rl{display:inline-block;padding:0 .08em;margin:0 -.02em;line-height:1.05;transform:rotate(var(--r,0deg))}
+.moment .kick{background:var(--ink)}
+.screen.moment>:not([class*="boo-"]):not(.share-bands){position:relative;z-index:2} /* content above the decorative bands; BOO! layers keep their own positions */
+.screen.moment>.share-bands{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.res-n{font-size:48px}
+.share-word{margin:8px 0 12px}
+.lu-foot .num{font-size:20px}
+/* LEVEL UP! */
+.lu-word{position:relative;z-index:2;margin-top:clamp(24px,7cqh,64px);transform:rotate(-6deg);transform-origin:left center}
+.lu-band{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;margin:clamp(28px,6cqh,56px) calc(-1 * var(--pad)) 0;padding:22px var(--pad)} /* about 25% shorter, group centred */
+.lu-band .band.ink{top:-12px;height:10px}
+.lu-band .band.white{top:0;bottom:0}
+.lu-band .band.cyan{bottom:-26px;height:18px}
+.lu-gen{position:relative;transform:rotate(-12deg);transform-origin:50% 50%;color:var(--ink);padding-left:8px} /* turns around the band's centre, so it stays centred on the band */
+.lu-gen .lbl{margin-bottom:6px}
+.lu-gen .big{font-family:var(--f-d);font-style:italic;font-weight:900;text-transform:uppercase;font-size:38px;line-height:.9}
+.lu-gen .stars{display:block;margin-top:4px;font-size:34px;line-height:1;color:var(--moon-on-white)}
+.lu-gen .stars .dim{color:var(--t-ink-dim)}
+/* the footer takes the space left between the band and the button: text bottom left, Peek scales to the free height */
+.lu-foot{position:relative;z-index:2;flex:1 1 auto;min-height:72px;container-type:size;display:flex;align-items:center;gap:8px;margin-top:40px;padding-bottom:12px} /* below the cyan stripe; the group sits centred in the space left above the button */
+.lu-count{flex:1;min-width:0}
+.lu-count .row{align-items:center;gap:10px}
+.lu-foot .lu-n{font-size:48px}
+.lu-count .txt{margin-top:6px}
+.lu-foot .tilt-peek{flex:none;align-self:flex-end;height:min(130px,calc(100cqh - 24px));max-width:45%;object-fit:contain;object-position:right bottom}
+/* Result */
+.screen[data-s="result"]{justify-content:space-between}
+.screen[data-s="result"] .actions{margin-top:0}
+.res-word{position:relative;z-index:2;margin-top:12px}
+.res-mid{position:relative;flex:none;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin:0 calc(-1 * var(--pad));padding:18px var(--pad)}
+.res-mid .band.white{top:0;bottom:0;transform:rotate(-6deg)}
+.res-mid .band.cyan{bottom:-14px;height:10px;transform:rotate(-6deg)}
+.res-mid>:not(.band){position:relative}
+.res-mid .tilt-peek{height:clamp(110px,21cqh,210px);margin:-30px 0 -26px}
+.res-zone{flex:none;padding:6px 16px;margin-top:44px} /* clears the tilted band and its cyan stripe */
+.res-zone .between{min-height:clamp(28px,4.4cqh,40px)}
+/* Share card */
+.share-k{position:relative;z-index:2;margin-top:auto}
+.share-k .kick{margin-top:12px}
+.sharecard{position:relative;z-index:2;width:100%;margin:12px 0 auto;border-radius:var(--r);padding:26px 22px 20px;background:var(--t1);color:var(--ink)}
+.sharecard .between{min-height:42px;border-bottom:1.5px solid rgba(5,10,30,.12)}
+.sharecard .stars{font-size:21px;color:var(--elec)}
+.sharecard .stars .dim{color:var(--t-ink-dim)}
+.sharecard .foot{display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px}
+.sharecard .foot .num{font-size:30px}
+.sharecard .tilt-peek{height:104px;margin:-6px -4px -6px 0}
+.share-bands .band.white{top:28%;height:22%;opacity:.12}
+.share-bands .band.cyan{top:52%;height:12px}
+/* BOO! (one CSS timeline, ~1.4s). Base styles are the end frame, so reduced motion shows only the landed pose */
+.screen.boo{animation:booshake .4s .52s both}
+@keyframes booshake{0%,100%{transform:none}15%{transform:translate(-9px,5px) rotate(-1deg)}30%{transform:translate(8px,-6px) rotate(1deg)}45%{transform:translate(-6px,3px)}60%{transform:translate(5px,-3px)}80%{transform:translate(-2px,1px)}}
+.boo-dim{position:absolute;inset:0;background:var(--ink);opacity:.9}
+.boo-flash{position:absolute;inset:0;overflow:hidden;background:var(--bg-moment);animation:flash .3s .52s both}
+@keyframes flash{0%{opacity:0}35%{opacity:1;filter:brightness(1.6)}100%{opacity:1}}
+.boo-flash .band.white{top:44%;height:120px}
+.boo-flash .band.ink{top:calc(44% - 18px);height:12px}
+.boo-flash .band.cyan{top:calc(44% + 132px);height:20px}
+.boo-word{position:relative;z-index:3;margin-top:30px}
+.boo-word .ransom .rl{animation:slam .26s calc(.58s + var(--i) * .08s) cubic-bezier(.2,1.5,.4,1) both}
+@keyframes slam{from{opacity:0;transform:translateY(-30px) scale(2.6) rotate(calc(var(--r) * -3))}70%{opacity:1;transform:scale(.88) rotate(var(--r))}to{opacity:1;transform:rotate(var(--r))}}
+.boo-stage{position:absolute;left:4%;right:4%;bottom:max(70px,10cqh);height:min(430px,56cqh);z-index:2}
+.boo-stage img{position:absolute;left:0;bottom:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;filter:var(--peek-shadow-ink);opacity:0}
+.boo-stage .boo-1-crouch{height:48.5%;animation:b1 .28s linear}
+.boo-stage .boo-2-rise{animation:b2 .24s .28s ease-out}
+.boo-stage .boo-3-pop{animation:b3 .43s .52s ease-out}
+.boo-stage .boo-4-land{opacity:1;animation:appear .95s step-end both,b4 .45s .95s ease-out both}
+@keyframes b1{0%{opacity:1;transform:none}30%{opacity:1;transform:scale(1.04,.94) translateX(-2px)}60%{opacity:1;transform:scale(1.07,.9) translateX(2px)}100%{opacity:1;transform:scale(1.12,.8)}}
+@keyframes b2{0%{opacity:1;transform:translateY(10%) scale(.94,.88)}100%{opacity:1;transform:translateY(-8%) scale(.86,1.16)}}
+@keyframes b3{0%{opacity:1;transform:translateY(-8%) scale(1.14,.88)}35%{opacity:1;transform:translateY(-12%) scale(.95,1.06)}100%{opacity:1;transform:translateY(-6%)}}
+@keyframes appear{0%{opacity:0}100%{opacity:1}}
+@keyframes b4{0%{transform:translateY(-6%)}35%{transform:scale(1.13,.86)}65%{transform:scale(.97,1.04)}85%{transform:scale(1.01,.99)}100%{transform:none}}
+/* the jump question dims just before BOO! */
+.dimming::after{content:"";position:absolute;inset:0;z-index:40;background:var(--ink);animation:dim .35s both}
+@keyframes dim{from{opacity:0}to{opacity:.9}}
+
+/* ---------- short screens (under 700px tall): tighter rows, Peek scales down via the scene ---------- */
+@media (max-height:700px){
+  .scene{margin-top:6px}
+  .chead{padding-top:6px;padding-bottom:6px}
+  .dlg{padding:20px 16px 12px}
+  .kick{margin-top:8px}
+}
+
+/* ---------- toast ---------- */
+.heads-ov{z-index:65}
+.toast{position:absolute;left:var(--pad);right:var(--pad);bottom:96px;z-index:70;border-radius:var(--r-s);padding:12px 16px;font-size:var(--fs-desc);font-weight:700;animation:enter var(--t-enter) var(--ease) both}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- wider windows. The phone layout below 600px is untouched ---------- */
+.demo{display:none}
+.side-word{display:none} /* sidebar wordmark, desktop only */
+.zone-grid>:nth-child(n+4){display:none} /* home shows three posters on a phone, more on desktop */
+
+/* 600 to 1023px: the phone layout, centred, the app background fills the window */
+@media (min-width:600px) and (max-width:1023px){
+  body{background:var(--bg)}
+  #app{max-width:480px;background:none}
+}
+
+/* 1024px and up: the web pages (web.js, web.css) replace the phone screens.
+   Screens shared with the phone (fear test, scare check, result, level up, jump alerts) sit in a centred column here. */
+@media (min-width:1024px){
+  body{background:var(--bg)}
+  #app{max-width:none;background:none}
+  .screen{--pad:max(20px,calc(50cqw - 320px))}
+  .toast{left:0;right:0;bottom:40px;width:fit-content;max-width:min(520px,calc(100% - 80px));margin:0 auto;padding:14px 24px;text-align:center;line-height:1.35;background:rgba(10,26,94,.95);border-color:var(--line-strong);box-shadow:0 14px 34px rgba(0,0,0,.45)}
+  .btn,.btn2{max-width:360px}
+  [data-go],[data-act],[role=button],a{cursor:pointer}
+
+  /* fear test and scare check: a focused centred column; the whole page scrolls and the buttons follow the content */
+  .screen.flow{padding-top:24px}
+  .screen.flow>.scroll{flex:none;overflow:visible;-webkit-mask-image:none;mask-image:none}
+  .screen.flow>.actions{position:static;margin:28px 0 48px;padding:0;background:none}
+  .screen.flow>.actions::before,.screen.flow>.top::before{display:none}
+  .screen[data-s="tSeen"]{--pad:max(20px,calc(50cqw - 480px))}
+  .seen-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:20px 16px}
+  /* with CoverCat: two columns, CoverCat left, dialogue and answers right */
+  .screen.flow:has(>.scene){--pad:max(20px,calc(50cqw - 480px));display:grid;grid-template-columns:280px minmax(0,520px);grid-auto-rows:max-content;column-gap:64px;justify-content:center;align-content:safe center}
+  .screen.flow:has(>.scene)>*{grid-column:2}
+  .screen.flow:has(>.scene)>.top{grid-column:1/-1;grid-row:1;position:static;margin:0 0 8px;padding:0}
+  .screen.flow:has(>.scene)>.kick{justify-self:start}
+  .screen.flow:has(>.scene) .scene{display:contents}
+  .screen.flow:has(>.scene) .scene .scene-peek{grid-column:1;grid-row:2/span 20;align-self:center;width:280px;height:280px;margin:0;padding:0;justify-content:center}
+  .screen.flow:has(>.scene) .dlg{grid-column:2;margin-top:24px}
+  .screen.flow:has(>.scene)>.actions{margin:16px 0 0}
+
+  /* jump alerts keep the 640px column; the ring grows to fill it */
+  .al-ring{width:min(360px,100%)}
+
+  /* big moments: same content in a 560px column, the background and bands fill the window */
+  .screen.moment{--pad:max(20px,calc(50cqw - 280px))}
+  .moment .actions{align-items:center}
+  .boo-stage{left:calc(50% - 260px);right:calc(50% - 260px)}
+}
+@media (min-width:1024px) and (max-width:1279px){ .seen-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (min-width:1024px) and (hover:hover){
+  /* desktop hover: borders brighten and colours shift, nothing jumps */
+  .opt,.crow,.gcard{transition:border-color var(--t-react),background var(--t-react)}
+  .opt:hover,.crow:hover,.gcard:hover{border-color:var(--t2)}
+  .poster .art{transition:transform 450ms cubic-bezier(.2,.7,.2,1)}
+  .poster:hover .art{transform:scale(1.05)}
+  .btn,.al-pp{transition:background 150ms ease}
+  .btn:hover,.al-pp:hover{background:var(--cyan)}
+  .btn.red:hover{background:#FF4867}
+  .btn2{transition:border-color 150ms ease,background 150ms ease}
+  .btn2:hover{border-color:var(--cyan);background:rgba(127,240,255,.08)}
+}
+
+
+/* ---------- watch it steps ---------- */
+.wstep{display:flex;align-items:center;gap:10px;margin:24px 0 10px}
+.wnum{flex:none;display:grid;place-items:center;width:30px;height:30px;transform:skewX(var(--skew));background:var(--ink);color:var(--cyan);font-size:18px}
+/* ---------- scare check head card ---------- */
+.chead{display:flex;align-items:center;gap:12px;flex:none;margin-top:4px;border-radius:var(--r-s);padding:8px 12px 8px 8px}
+.chead .mini{width:48px;height:72px}
+.chead .grow{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.chead .kick{margin-top:0}
+.chead-t{font-size:20px;line-height:1.05}
+.chead-s{flex:none;display:flex;flex-direction:column;align-items:center;padding-left:6px}
+.chead-s .num{font-size:34px}
+.chead-s .lbl{text-transform:uppercase;margin-top:2px}
+/* ---------- my films: watched rows with Rate again ---------- */
+.wrow{display:flex;align-items:center}
+.wrow>.lrow{flex:1;min-width:0}
+.wrow-r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px;padding-right:14px}
+.rate-again{min-height:32px;padding:0;font-size:var(--fs-small)}
+/* next level art modes: locked (blurred + lock), blocked by filters (blurred + red reason tag), open (clear) */
+.mu-p.blocked>div{width:42px}
+.mu-p.open .art{filter:none}
+.mu-why{position:absolute;left:2px;right:2px;bottom:3px;padding:1px 0;transform:skewX(var(--skew));background:var(--red);font-family:var(--f-d);font-style:italic;font-weight:900;font-size:9px;line-height:1.25;text-align:center;text-transform:uppercase;color:var(--t1);white-space:nowrap;overflow:hidden}
+/* quiet actions spread across the width, under the plot (like a streaming app) */
+.qacts.spread{justify-content:space-around;gap:0;margin-top:14px;padding:4px 0}
+.qacts.spread .qa{flex:1;min-width:0}
+/* compact choice list for bottom sheets: thin rows, the chosen row in cyan with a check */
+.slist{display:flex;flex-direction:column;border-radius:var(--r-s);overflow:hidden;margin:6px 0 10px}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:0 16px;font-size:var(--fs-desc);font-weight:600;color:var(--t1);text-align:left}
+.srow+.srow{border-top:1px solid var(--line)}
+.srow svg{width:18px;height:18px;fill:none;stroke:var(--cyan);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;visibility:hidden}
+.srow[aria-checked="true"]{color:var(--cyan)}
+.srow[aria-checked="true"] svg{visibility:visible}
+.srow:active{background:rgba(127,240,255,.08)}
+.mu-t.one .h3{font-size:18px}
+.munlock .btn2.sm.inline{padding:0 14px}
+
+/* quiet actions on the phone film page: a streaming-app style row, anchored left, each a quarter of the width */
+.qacts.spread{justify-content:flex-start;margin:18px calc(-1 * 8px) 0;padding:0}
+.qacts.spread .qa{flex:0 0 25%;color:var(--t1)}
+.qacts.spread .qa span{color:var(--t2)}

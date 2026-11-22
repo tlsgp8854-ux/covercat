@@ -1,0 +1,16 @@
+{
+  "name": "CoverCat: horror for scaredy-cats",
+  "short_name": "CoverCat",
+  "description": "Horror films matched to how easily you scare.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#081649",
+  "theme_color": "#081649",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
