@@ -381,6 +381,8 @@ function go(name, p = {}, push = true) {
   const sc = app.querySelector('.screen');
   fit(sc);
   if (sc.classList.contains('flow')) [sc, sc.querySelector(':scope>.scroll')].forEach(el => el && el.addEventListener('scroll', () => sc.classList.toggle('scrolled', el.scrollTop > 2), { passive: true }));
+  // Genre tab rows: keep the chosen tab in view
+  sc.querySelectorAll('.gtabs').forEach(r => { const o = r.querySelector('.gtab.on'); if (o) r.scrollLeft = o.offsetLeft - (r.clientWidth - o.offsetWidth) / 2; });
   if (AFTER[name]) AFTER[name](p, sc);
   if (isWeb()) webURL(name, p);
   const h = sc.querySelector('h1,h2,.focus'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
@@ -664,8 +666,8 @@ const SCREENS = {
       <button class="avatar" data-go="profile" aria-label="Profile">${avatarImg()}</button></div>
     <div class="courage"><span class="lbl l">Courage LV <span class="num">${courage()}</span></span>
       <span class="bar" role="img" aria-label="${xp} of 2 films to the next level"><i style="width:${xp * 50 + 8}%"></i></span><span class="small">${pl(2 - xp, 'more film', 'more films')}</span></div>
-    <div class="menu">${ORDER.map(k => `<div class="mrow ${k === g ? 'on' : ''}"><button class="mname" data-act="sel" data-g="${k}" ${k === g ? 'aria-current="true"' : ''}>${GEN[k].n}</button>
-      <button class="mstars" data-go="level" data-g="${k}" aria-label="${GEN[k].n} level ${S.levels[k]} of 3. Change it">${stars(S.levels[k])}</button></div>`).join('')}</div>
+    <div class="gtabs home-tabs" role="tablist" aria-label="Genre">${ORDER.map(k => `<button class="gtab ${k === g ? 'on' : ''}" role="tab" data-act="sel" data-g="${k}" aria-selected="${k === g}">${GEN[k].n}</button>`).join('')}</div>
+    <button class="home-lv" data-go="level" data-g="${g}" aria-label="${GEN[g].n} level ${S.levels[g]} of 3. Change it"><span class="lbl l">${GEN[g].n}</span>${stars(S.levels[g])}<span class="cyan">Change ›</span></button>
     <div class="scroll">
       ${sec('In your zone', list.length ? `<button class="more" data-go="zone"><span class="num">${list.length}</span> ${list.length === 1 ? 'film' : 'films'} ›</button>` : '')}
       ${list.length ? `<div class="row3 zone-grid">${list.slice(0, 12).map(f => poster(f)).join('')}</div>` : empty('Nothing here yet. Watch something a little easier and CoverCat will open this up.')}
