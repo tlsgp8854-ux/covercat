@@ -9,10 +9,14 @@ const TO_WEB = { home: 'wHome', zone: 'wFilms', films: 'wProfile', profile: 'wPr
 const TO_APP = { wResult: 'result', wHome: 'home', wFilms: 'allfilms', wProfile: 'profile', wFilm: 'detail', wSettings: 'filters', wAuth: 'signin', wLevel: 'level' };
 route = (name, p) => {
   if (isWeb()) {
-    if (name === 'savepro') return S.user ? ['wHome', p] : ['wAuth', { ...p, mode: 'signup', save: '1' }];
-    if (name === 'zone') return ['wFilms', { ...p, fit: '1', g: S.sel || 'all' }];
-    if (name === 'films') return ['wProfile', { ...p, tab: p.tab || 'saved' }];
-    return [TO_WEB[name] || name, p];
+    const r = name === 'savepro' ? (S.user ? ['wHome', p] : ['wAuth', { ...p, mode: 'signup', save: '1' }])
+      : name === 'zone' ? ['wFilms', { ...p, fit: '1', g: S.sel || 'all' }]
+      : name === 'films' ? ['wProfile', { ...p, tab: p.tab || 'saved' }]
+      : [TO_WEB[name] || name, p];
+    // remember the normal page a focused flow (fear test, scare check, jump alerts) was started from; its X goes back there
+    if (FOCUS.has(r[0])) { if (cur && !FOCUS.has(cur.name)) FLOW_FROM = { name: cur.name, p: { ...cur.p, cls: '' } }; }
+    else FLOW_FROM = null;
+    return r;
   }
   return [TO_APP[name] || name, p];
 };
@@ -20,12 +24,14 @@ route = (name, p) => {
 /* ---------- URLs: every web page has its own address, browser back works ---------- */
 const PATHS = { wHow: 'how', wHome: '', wFilms: 'films', wFilm: 'film', wProfile: 'profile', wSettings: 'settings', wLevel: 'level', altimer: 'alerts', wResult: 'result', share: 'share' };
 const SLIM = [...FLOW, 'altimer', 'check1', 'check2', 'check3', 'savepro', 'levelup', 'tooscary'];
+const FOCUS = new Set([...SLIM, 'tBoo', 'finish', 'alert']);
+let FLOW_FROM = null; // a direct link has none, so the X goes home
 webURL = (name, p) => {
   // Fear test, scare check and jump alerts keep their focused layout, under a slim header with the wordmark and Exit
   const sc = app.querySelector('.screen');
   if (SLIM.includes(name) && sc && !sc.querySelector('.flowhead')) sc.insertAdjacentHTML('afterbegin', `<header class="webhead flowhead"><div class="wh-in"><button class="wh-logo" data-go="wHome" aria-label="CoverCat home">Cover<span>Cat</span></button>
       <span class="lbl l t3">${name === 'altimer' ? 'Jump alerts' : /^check|levelup|tooscary/.test(name) ? 'Scare check' : 'Fear test'}</span></div></header>
-      <button class="wclose wx" data-go="wHome" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>`);
+      <button class="wclose wx" data-act="wxclose" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>`);
   // Jump alerts: Restart is a quiet action next to Film time, the number it sets back to 0:00:00 (on the phone it stays in the ⋯ menu)
   if (sc && name === 'altimer' && !sc.querySelector('.al-rs')) { const t = sc.querySelector('.al-ftime'); if (t) t.insertAdjacentHTML('afterend', '<button class="qa al-rs" data-act="alrestart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4v4.5H9"/></svg><span>Restart</span></button>'); }
   if (sc && name === 'share' && !sc.querySelector('.wclose')) {
@@ -98,7 +104,7 @@ function wposter(f, opts = {}) {
   const corner = opts.rating && w && FACE[w.r] ? `<span class="wp-tag ${({ easy: 'cyan', ok: 'moon', too: 'red' })[w.r]}">${FACE[w.r]}</span>` : '';
   return `<div class="wp"><button class="poster ${f.poster ? 'has-art' : ''}" style="${posterBg(f.id)}" data-go="wFilm" data-id="${f.id}" aria-label="${esc(f.t)}">${art(f)}
       <span class="pt">${esc(f.t)}</span>${corner}</button>
-    <div class="wp-t">${esc(f.t)}</div><div class="wp-m small">${f.y} · ${GEN[mainG(f)].n} ${stars(f.lv)}</div></div>`;
+    <div class="wp-t">${esc(f.t)}</div><div class="wp-m small">${f.y} · ${GEN[opts.g && f.g.includes(opts.g) ? opts.g : mainG(f)].n} ${stars(f.lv)}</div></div>`;
 }
 
 /* ---------- actions ---------- */
@@ -120,7 +126,7 @@ Object.assign(ACT, {
     const back = logIn(name.slice(0, 20), email); reset('wHome'); toast(back ? `Welcome back, ${S.user.name}` : `Welcome, ${S.user.name}`); },
   wf(b) { const { k, v } = b.dataset; WF[k] = k === 'fit' ? !WF.fit : v; refresh(); },
   wptab(b) { go('wProfile', { ...cur.p, tab: b.dataset.tab, cls: 'still' }, false); },
-  wtest() { S.lo = false; save(); reset('tGenres'); },
+  wtest() { const from = cur && !FOCUS.has(cur.name) ? { name: cur.name, p: { ...cur.p, cls: '' } } : null; S.lo = false; save(); FLOW_FROM = from; reset('tGenres'); },
   wdd(b) { const d = b.closest('.wdd'), open = !d.classList.contains('open'); app.querySelectorAll('.wdd.open').forEach(x => { x.classList.remove('open'); x.querySelector('.wdd-b').setAttribute('aria-expanded', 'false'); });
     d.classList.toggle('open', open); b.setAttribute('aria-expanded', open); },
   wddpick(b) { WF[b.dataset.k] = b.dataset.v; refresh(); },
@@ -132,6 +138,12 @@ Object.assign(ACT, {
   whclear() { WF.q = ''; if (cur.name === 'wFilms') refresh(); else { const i = app.querySelector('#whq'); i.value = ''; app.querySelector('.wh-sf .sf-clear').hidden = true; } const i = app.querySelector('#whq'); if (i) i.focus(); },
   // Close on Your level: back to the page before it (genre tabs and level changes don't count), or home. Levels are saved as they change
   wclose() { while (stack.length && stack[stack.length - 1].name === 'wLevel') stack.pop(); stack.length ? back() : go('wHome', {}, false); },
+  wxclose() {
+    const o = FLOW_FROM; FLOW_FROM = null;
+    while (stack.length && FOCUS.has(stack[stack.length - 1].name)) stack.pop();
+    if (o && stack.length && stack[stack.length - 1].name === o.name) stack.pop();
+    o ? go(o.name, o.p, false) : go('wHome', {}, false);
+  },
   wfclear() { WF = { g: 'all', lv: '0', fit: !!S.done, sort: 'pop' }; refresh(); }
 });
 const _finish = ACT.finish; ACT.finish = () => { S.lo = false; _finish(); };
@@ -192,7 +204,7 @@ Object.assign(SCREENS, {
           ${sel('sort', 'Sort', [['pop', 'Popular'], ['calm', 'Least scary first'], ['scary', 'Scariest first']])}
         </div>
       </div>
-      ${list.length ? `<div class="wgrid">${list.map(f => wposter(f)).join('')}</div>` : `<div class="wempty">${empty('No films match these filters.')}</div>`}</div>`);
+      ${list.length ? `<div class="wgrid">${list.map(f => wposter(f, { g: WF.g !== 'all' && WF.g })).join('')}</div>` : `<div class="wempty">${empty('No films match these filters.')}</div>`}</div>`);
   },
 
   wFilm(p) {
@@ -459,7 +471,7 @@ function personal() {
     ${S.user ? '' : `<div class="wbanner glass"><span class="txt"><b>Save your fear profile.</b> Right now it only lives in this browser.</span>${pbtn('Sign up', 'data-go="wAuth" data-mode="signup" data-save="1"')}<button class="link" data-go="wAuth" data-mode="login">Log in</button></div>`}
     <div class="wh-tabs" role="tablist">${ORDER.map(k => `<button role="tab" class="wh-tab ${k === g ? 'on' : ''}" data-act="wsel" data-g="${k}" aria-selected="${k === g}"><span class="d">${GEN[k].n}</span>${stars(L[k])}</button>`).join('')}</div>
     <section class="wsec wsec-tight"><div class="wsec-row"><h2 class="d h2 wsec-h"><span>In your zone</span></h2>${list.length ? `<button class="link cyan" data-go="wFilms" data-fit="1" data-g="${g}">See all ${list.length} ›</button>` : ''}</div>
-      ${list.length ? `<div class="wgrid">${list.slice(0, 12).map(f => wposter(f)).join('')}</div>` : `<div class="wempty">${empty('Nothing here yet. Watch something a little easier and CoverCat will open this up.')}</div>`}
+      ${list.length ? `<div class="wgrid">${list.slice(0, 12).map(f => wposter(f, { g })).join('')}</div>` : `<div class="wempty">${empty('Nothing here yet. Watch something a little easier and CoverCat will open this up.')}</div>`}
       ${wunlock(g, L[g])}</section>
     ${saved.length ? `<section class="wsec"><div class="wsec-row"><h2 class="d h2 wsec-h"><span>Saved for later</span></h2><button class="link cyan" data-go="wProfile" data-tab="saved">All saved ›</button></div><div class="wgrid">${saved.map(f => wposter(f)).join('')}</div></section>` : ''}
   </main>${wfoot()}`;

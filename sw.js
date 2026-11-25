@@ -1,6 +1,6 @@
 // Offline cache: app shell first, network for everything else with cache fallback.
 // Poster art (image.tmdb.org) is cache first in its own cache, so a poster seen once still shows offline.
-const V = 'peek-v65';
+const V = 'peek-v66';
 const ART = 'peek-art-v1';
 const SHELL = ['./', 'index.html', 'styles.css', 'web.css', 'sfx.js', 'app.js', 'web.js', 'qrcode.min.js', 'films.json', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon.svg',
