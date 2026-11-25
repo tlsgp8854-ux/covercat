@@ -523,22 +523,26 @@
 
   /* LEVEL UP!: a wide poster-like composition, the band runs edge to edge, CoverCat stands on the right */
   .flowhead{position:fixed!important;left:0!important;right:0!important;top:0!important;margin:0!important;transform:none!important}
-  .screen.moment[data-s="levelup"]{--pad:max(48px,calc(50cqw - 600px));display:flex;flex-direction:column;overflow-y:auto;padding-top:112px!important;padding-bottom:48px}
-  .screen.moment[data-s="levelup"] .lu-word{margin-top:0;transform:rotate(-6deg) scale(1.7);transform-origin:left center;align-self:flex-start;margin-left:6px}
-  .screen.moment[data-s="levelup"] .lu-band{margin-top:64px;padding-top:24px;padding-bottom:24px}
+  /* The screen starts under the 72px header, so nothing ever scrolls behind it, and the header stays on the top layer.
+     Sizes follow the window height (cqh of #app, 900px = full size), so the whole moment fits one screen on a laptop */
+  .screen.moment[data-s="levelup"]>.flowhead{z-index:40}
+  .screen.moment[data-s="levelup"]{--pad:max(48px,calc(50cqw - 600px));top:72px;height:calc(100cqh - 72px);display:flex;flex-direction:column;overflow-y:auto;padding-top:min(40px,4.4cqh)!important;padding-bottom:min(40px,4.4cqh)}
+  .screen.moment[data-s="levelup"] .lu-word{margin-top:min(32px,3.6cqh);transform:rotate(-6deg);transform-origin:left center;align-self:flex-start;margin-left:6px}
+  .screen.moment[data-s="levelup"] .lu-word .ransom{font-size:min(102px,11.3cqh)!important}
+  .screen.moment[data-s="levelup"] .lu-band{margin-top:min(64px,7.1cqh);padding-top:min(24px,2.7cqh);padding-bottom:min(24px,2.7cqh)}
   .screen.moment[data-s="levelup"] .lu-gen{transform:rotate(-6deg);padding-left:0}
-  .screen.moment[data-s="levelup"] .lu-gen .lbl{font-size:24px}
-  .screen.moment[data-s="levelup"] .lu-gen .big{font-size:clamp(64px,6vw,96px)}
-  .screen.moment[data-s="levelup"] .lu-gen .stars{font-size:52px;margin-top:10px}
-  .screen.moment[data-s="levelup"] .lu-foot{flex:none;container-type:normal;min-height:0;margin-top:56px;align-items:center;padding-bottom:0}
-  .screen.moment[data-s="levelup"] .lu-foot .lu-n{font-size:88px}
-  .screen.moment[data-s="levelup"] .lu-count .lbl{font-size:24px}
-  .screen.moment[data-s="levelup"] .lu-count .txt{font-size:18px}
-  .screen.moment[data-s="levelup"] .lu-foot .tilt-peek{height:240px;max-width:none;margin-right:40px;margin-top:-80px}
-  .screen.moment[data-s="levelup"]>.actions{position:static;align-items:flex-start;margin:8px 0 0;padding:0;background:none}
+  .screen.moment[data-s="levelup"] .lu-gen .lbl{font-size:max(18px,min(24px,2.7cqh))}
+  .screen.moment[data-s="levelup"] .lu-gen .big{font-size:min(clamp(64px,6vw,96px),10.7cqh)}
+  .screen.moment[data-s="levelup"] .lu-gen .stars{font-size:min(52px,5.8cqh);margin-top:min(10px,1.1cqh)}
+  .screen.moment[data-s="levelup"] .lu-foot{flex:none;container-type:normal;min-height:0;margin-top:min(56px,6.2cqh);align-items:center;padding-bottom:0}
+  .screen.moment[data-s="levelup"] .lu-foot .lu-n{font-size:min(88px,9.8cqh)}
+  .screen.moment[data-s="levelup"] .lu-count .lbl{font-size:max(18px,min(24px,2.7cqh))}
+  .screen.moment[data-s="levelup"] .lu-count .txt{font-size:max(15px,min(18px,2cqh))}
+  .screen.moment[data-s="levelup"] .lu-foot .tilt-peek{height:min(240px,26.7cqh);max-width:none;margin-right:40px;margin-top:calc(-1 * min(80px,8.9cqh))}
+  .screen.moment[data-s="levelup"]>.actions{position:static;align-items:flex-start;margin:min(8px,.9cqh) 0 0;padding:0;background:none}
   .screen.moment[data-s="levelup"]>.actions::before{display:none}
-  .screen.moment[data-s="levelup"]>.actions .btn{display:inline-block;width:auto;min-width:300px;height:60px}
-  .screen.moment[data-s="levelup"]>.actions .btn>span{padding:0 48px;font-size:24px}
+  .screen.moment[data-s="levelup"]>.actions .btn{display:inline-block;width:auto;min-width:300px;height:max(50px,min(60px,6.7cqh))}
+  .screen.moment[data-s="levelup"]>.actions .btn>span{padding:0 48px;font-size:max(20px,min(24px,2.7cqh))}
 }
 @media (min-width:1024px){
   .screen.moment[data-s="levelup"] .lu-band .band{transform:rotate(-4deg)}
