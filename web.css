@@ -335,7 +335,7 @@
 .wu-t .desc{max-width:620px}
 .wunlock>.btn2{flex:none;width:auto;padding:0 24px}
 
-.screen[data-s="share"]:has(>.wclose){padding-top:64px}
+.screen[data-s="share"]:has(>.wclose){padding-top:64px;overflow-y:auto} /* scrolls on short windows, never cut off */
 
 /* =====================================================================
    Web design system pass: one button scale, slanted plates for section titles,
@@ -371,7 +371,7 @@
 .wsec-row .wsec-h,.wsec-row .link{margin-bottom:0}
 
 /* close: a slanted square plate with the blue hard shadow, same family as the main buttons */
-.wclose{position:fixed!important;top:28px;right:clamp(32px,3.5vw,64px);z-index:40;width:52px;height:48px;transform:skewX(var(--skew));background:var(--ink);border:1px solid var(--line-strong);border-radius:var(--r-plate);box-shadow:5px 5px 0 var(--elec)}
+.wclose{position:absolute!important;top:28px;right:clamp(32px,3.5vw,64px);z-index:20;width:52px;height:48px;transform:skewX(var(--skew));background:var(--ink);border:1px solid var(--line-strong);border-radius:var(--r-plate);box-shadow:5px 5px 0 var(--elec)}
 .wclose>span{display:grid;place-items:center;height:100%;transform:skewX(var(--unskew))}
 .wclose svg{width:20px;height:20px;fill:none;stroke:var(--t1);stroke-width:2.4;stroke-linecap:round}
 .wclose:hover{transform:skewX(var(--skew)) translate(2px,2px);box-shadow:3px 3px 0 var(--elec)}
@@ -652,11 +652,13 @@
 .ws-h1{font-size:clamp(40px,3.4vw,52px);line-height:1}
 .screen:is([data-s="wSettings"],[data-s="wLevel"]) .wmain{position:relative}
 .screen:is([data-s="wSettings"],[data-s="wLevel"]) .wclose{position:absolute!important;top:44px;right:clamp(32px,3.5vw,64px)}
+.screen[data-s="wSettings"] .wclose{z-index:40} /* Settings stays as it was */
 /* Fear test, scare check, level up, too scary, jump alerts: the same X, same spot (44px under the 72px header, at the page's right edge) */
-.screen>.wclose.wx{position:absolute!important;z-index:40!important;top:116px;right:calc(max(0px,(100cqw - 1360px) / 2) + clamp(32px,3.5vw,64px))}
+.screen>.wclose.wx{position:absolute!important;z-index:20!important;top:116px;right:calc(max(0px,(100cqw - 1360px) / 2) + clamp(32px,3.5vw,64px))}
 .screen.moment[data-s="levelup"]>.wclose.wx{top:44px}
 .al-fcard .qa.al-rs{flex:none;min-width:0;margin:-4px -6px -4px 4px;padding:8px 10px;border-left:1px solid var(--line);border-radius:0 12px 12px 0}
-.screen[data-s="altimer"]:has(>.flowhead)>.scroll{padding-top:76px} /* starts under the X, so the film card stays clear of it */
+.screen[data-s="altimer"]:has(>.flowhead)>.scroll{flex:none;padding:8px calc(61px + 24px) 32px 0} /* a strip on the right for the X; never squeezed, so the page scrolls instead of cutting the controls */
+.screen[data-s="altimer"]:has(>.flowhead) .al-ring{width:min(420px,max(260px,calc(100cqh - 260px)))}
 .ws-layout{grid-template-columns:200px minmax(0,1fr);gap:64px}
 .ws-nav{top:96px}
 .ws-body{gap:18px;max-width:560px;padding-left:48px;border-left:1px solid var(--line);min-height:460px}
