@@ -464,7 +464,7 @@ function wunlock(g, L) {
   const art4 = (films, mode) => `<div class="wu-posters ${mode}" aria-hidden="true">${films.slice(0, 4).map(f => `<div class="wu-p" style="${posterBg(f.id)}">${art(f)}${mode === 'blocked' ? `<span class="mu-why">${whyTag(f)}</span>` : ''}</div>`).join('')}${mode === 'locked' ? `<span class="wu-lock">${NL_ICON.lock}</span>` : ''}</div>`;
   if (L >= 3) return `<div class="wunlock glass">${art4(nlTop(g), 'open')}<div class="wu-t"><span class="lbl l cyan">All levels open</span><span class="d h2">Every ${n} level unlocked</span>
     <p class="desc">You can watch anything in ${n.toLowerCase()} now. Brave cat.</p></div>
-    ${sbtn('Change level', `data-go="wLevel" data-g="${g}"`)}</div>`;
+    ${sbtn('Change', `data-go="wLevel" data-g="${g}"`)}</div>`;
   const locked = nlLocked(g, L);
   if (!locked.length) { const bl = nlBlocked(g, L);
     return `<div class="wunlock glass">${bl.length ? art4(bl, 'blocked') : ''}<div class="wu-t"><span class="lbl l cyan">Next level</span><span class="d h2">No ${up} ${n} films fit your filters</span>
