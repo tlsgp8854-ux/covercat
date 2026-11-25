@@ -276,7 +276,8 @@ const zoneList = g => FILMS.filter(f => fits(f, g) && !S.watched[f.id]).sort((a,
 // Home: what the next level opens. Always shown: a count, an empty state that points to the filters, or all done
 function unlockCard(g, L) {
   const up = `<span class="stars">${'★'.repeat(L + 1)}</span>`, locked = L < 3 ? nlLocked(g, L) : [];
-  if (L >= 3) return `<div class="munlock glass">${nlArt(nlTop(g), 'open')}<div class="mu-t"><span class="lbl s cyan">All levels open</span><span class="d h3">Every ${GEN[g].n} level unlocked</span></div></div>`;
+  if (L >= 3) return `<div class="munlock glass">${nlArt(nlTop(g), 'open')}<div class="mu-t"><span class="lbl s cyan">All levels open</span><span class="d h3">Every ${GEN[g].n} level unlocked</span></div>
+    <button class="btn2 sm inline" data-go="level" data-g="${g}">Change level</button></div>`;
   if (!locked.length) { const bl = nlBlocked(g, L);
     return `<div class="munlock glass">${bl.length ? nlArt(bl, 'blocked') : ''}<div class="mu-t"><span class="lbl s cyan">Next level</span><span class="d h3">No ${up} films fit your filters</span></div>
     <button class="btn2 sm inline" data-go="filters">Fear filters</button></div>`; }
