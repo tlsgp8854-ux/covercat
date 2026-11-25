@@ -655,8 +655,7 @@
 /* Fear test, scare check, level up, too scary, jump alerts: the same X, same spot (44px under the 72px header, at the page's right edge) */
 .screen>.wclose.wx{position:absolute!important;z-index:40!important;top:116px;right:calc(max(0px,(100cqw - 1360px) / 2) + clamp(32px,3.5vw,64px))}
 .screen.moment[data-s="levelup"]>.wclose.wx{top:44px}
-.screen[data-s="altimer"]:has(>.flowhead) .scroll>.al-restart{grid-column:1;grid-row:6;display:flex;justify-content:center;margin-top:20px;align-self:start}
-.al-restart .btn2{width:auto;min-width:160px}
+.al-fcard .qa.al-rs{flex:none;min-width:0;margin:-4px -6px -4px 4px;padding:8px 10px;border-left:1px solid var(--line);border-radius:0 12px 12px 0}
 .screen[data-s="altimer"]:has(>.flowhead)>.scroll{padding-top:76px} /* starts under the X, so the film card stays clear of it */
 .ws-layout{grid-template-columns:200px minmax(0,1fr);gap:64px}
 .ws-nav{top:96px}

@@ -26,8 +26,8 @@ webURL = (name, p) => {
   if (SLIM.includes(name) && sc && !sc.querySelector('.flowhead')) sc.insertAdjacentHTML('afterbegin', `<header class="webhead flowhead"><div class="wh-in"><button class="wh-logo" data-go="wHome" aria-label="CoverCat home">Cover<span>Cat</span></button>
       <span class="lbl l t3">${name === 'altimer' ? 'Jump alerts' : /^check|levelup|tooscary/.test(name) ? 'Scare check' : 'Fear test'}</span></div></header>
       <button class="wclose wx" data-go="wHome" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>`);
-  // Jump alerts: Restart is a secondary button right under the timer controls (on the phone it stays in the ⋯ menu)
-  if (sc && name === 'altimer' && !sc.querySelector('.al-restart')) { const c = sc.querySelector('.al-ctl'); if (c) c.insertAdjacentHTML('afterend', '<div class="al-restart"><button class="btn2" data-act="alrestart">Restart</button></div>'); }
+  // Jump alerts: Restart is a quiet action next to Film time, the number it sets back to 0:00:00 (on the phone it stays in the ⋯ menu)
+  if (sc && name === 'altimer' && !sc.querySelector('.al-rs')) { const t = sc.querySelector('.al-ftime'); if (t) t.insertAdjacentHTML('afterend', '<button class="qa al-rs" data-act="alrestart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4v4.5H9"/></svg><span>Restart</span></button>'); }
   if (sc && name === 'share' && !sc.querySelector('.wclose')) {
     const top = sc.querySelector(':scope>.top'); if (top) top.remove();
     sc.insertAdjacentHTML('afterbegin', '<button class="wclose" data-act="back" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>');
