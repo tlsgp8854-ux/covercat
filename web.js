@@ -24,7 +24,10 @@ webURL = (name, p) => {
   // Fear test, scare check and jump alerts keep their focused layout, under a slim header with the wordmark and Exit
   const sc = app.querySelector('.screen');
   if (SLIM.includes(name) && sc && !sc.querySelector('.flowhead')) sc.insertAdjacentHTML('afterbegin', `<header class="webhead flowhead"><div class="wh-in"><button class="wh-logo" data-go="wHome" aria-label="CoverCat home">Cover<span>Cat</span></button>
-      <span class="lbl l t3">${name === 'altimer' ? 'Jump alerts' : /^check|levelup|tooscary/.test(name) ? 'Scare check' : 'Fear test'}</span><div class="wh-right">${name === 'altimer' ? '<button class="wh-login" data-act="alrestart">Restart</button>' : ''}<button class="wh-login" data-go="wHome">Exit</button></div></div></header>`);
+      <span class="lbl l t3">${name === 'altimer' ? 'Jump alerts' : /^check|levelup|tooscary/.test(name) ? 'Scare check' : 'Fear test'}</span></div></header>
+      <button class="wclose wx" data-go="wHome" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>`);
+  // Jump alerts: Restart is a secondary button right under the timer controls (on the phone it stays in the ⋯ menu)
+  if (sc && name === 'altimer' && !sc.querySelector('.al-restart')) { const c = sc.querySelector('.al-ctl'); if (c) c.insertAdjacentHTML('afterend', '<div class="al-restart"><button class="btn2" data-act="alrestart">Restart</button></div>'); }
   if (sc && name === 'share' && !sc.querySelector('.wclose')) {
     const top = sc.querySelector(':scope>.top'); if (top) top.remove();
     sc.insertAdjacentHTML('afterbegin', '<button class="wclose" data-act="back" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>');
@@ -69,7 +72,7 @@ const showLanding = () => !S.done || (!S.user && S.lo); // no fear test yet (or 
 const lv = () => { if (!S.levels) computeLevels(); return S.levels; };
 const pbtn = (label, attrs = '') => `<button class="btn" ${attrs}><span>${label}</span></button>`;
 const sbtn = (label, attrs = '') => `<button class="btn2" ${attrs}>${label}</button>`;
-function whead(nav, close) {
+function whead(nav) {
   const items = S.user ? [['wFilms', 'Films'], ['wProfile', 'My films', 'data-tab="saved"']] : [['wFilms', 'Films'], ['wHow', 'How it works']];
   const links = items.map(([k, l, x = '']) => k === 'how' ? `<button data-act="whow">${l}</button>`
     : `<button data-go="${k}" ${x} ${nav === k ? 'aria-current="page"' : ''}>${l}</button>`).join('');
@@ -79,7 +82,7 @@ function whead(nav, close) {
           <button role="menuitem" data-go="wProfile">Profile</button><button role="menuitem" data-go="wSettings">Settings</button><span class="wh-sep" role="separator"></span><button role="menuitem" class="wh-out" data-act="wlogout">Log out</button></div></div>`
     : `<button class="wh-login" data-go="wAuth" data-mode="login">Log in</button><button class="wh-signup" data-go="wAuth" data-mode="signup"><span>Sign up</span></button>`;
   return `<header class="webhead"><div class="wh-in"><button class="wh-logo" data-go="wHome" aria-label="CoverCat home">Cover<span>Cat</span></button>
-    <nav class="wh-nav">${links}</nav><div class="wh-right"><div class="sfield is-input wh-sf"><span class="sf-ic" aria-hidden="true">${ICON.search}</span><input id="whq" type="text" inputmode="search" placeholder="Search films" autocomplete="off" value="${esc(WF.q || '')}" aria-label="Search films"><button class="sf-clear" data-act="whclear" aria-label="Clear search" ${WF.q ? '' : 'hidden'}>${ICON.x}</button></div>${right}${close ? '<button class="wh-login" data-act="wclose">Close</button>' : ''}</div></div></header>`;
+    <nav class="wh-nav">${links}</nav><div class="wh-right"><div class="sfield is-input wh-sf"><span class="sf-ic" aria-hidden="true">${ICON.search}</span><input id="whq" type="text" inputmode="search" placeholder="Search films" autocomplete="off" value="${esc(WF.q || '')}" aria-label="Search films"><button class="sf-clear" data-act="whclear" aria-label="Clear search" ${WF.q ? '' : 'hidden'}>${ICON.x}</button></div>${right}</div></div></header>`;
 }
 const wfoot = () => `<footer class="wfoot"><div class="wf-in">
   <div class="wf-brand"><div class="wh-logo">Cover<span>Cat</span></div><p class="small">Horror for people who love horror but scare easily.</p></div>
@@ -87,8 +90,7 @@ const wfoot = () => `<footer class="wfoot"><div class="wf-in">
   <div class="wf-col"><span class="lbl s t3">Account</span>${S.user ? '<button data-go="wProfile">Profile</button><button data-go="wSettings">Settings</button>' : '<button data-go="wAuth" data-mode="login">Log in</button><button data-go="wAuth" data-mode="signup">Sign up</button>'}</div>
   <div class="wf-qr"><span class="wf-qr-c">${qrSvg(siteURL())}</span><span><b class="d">Get it on your phone</b><span class="small t3">Scan to open CoverCat. No app store needed.</span>${INSTALL_EVT && !standalone() ? '<button class="link cyan" data-act="install">Install on this computer</button>' : ''}</span></div>
   <div class="wf-small small"><p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p><p>© 2026 CoverCat · Designed and built by Hailey</p><p>Hyper Island DC27 individual project</p></div></div></footer>`;
-// close: a Close button at the right end of the header, styled like Exit on the scare check
-const page = (nav, body, cls = '', close = false) => `${whead(nav, close)}<main class="wmain ${cls}">${body}</main>${wfoot()}`;
+const page = (nav, body, cls = '') => `${whead(nav)}<main class="wmain ${cls}">${body}</main>${wfoot()}`;
 const bd = f => f && f.poster ? `<div class="wbd" aria-hidden="true"><img src="${IMG}w780${f.poster}" alt="" crossorigin="anonymous" onerror="this.remove()"></div>` : '<div class="wbd" aria-hidden="true"></div>';
 // Poster card for web grids: title and level under the poster (and your rating in Watched)
 function wposter(f, opts = {}) {
@@ -140,7 +142,10 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !isWeb()) return;
   const open = app.querySelectorAll('.wdd.open,.wh-acc.open');
-  if (!open.length && cur && cur.name === 'wLevel' && !(e.target.closest && e.target.closest('input,textarea'))) { ACT.wclose(); return; }
+  if (!open.length && cur && !(e.target.closest && e.target.closest('input,textarea'))) {
+    if (cur.name === 'wLevel') { ACT.wclose(); return; }
+    const x = app.querySelector('.screen>.wclose.wx'); if (x && !app.querySelector('.al-stop:not([hidden]),.av-ov')) { x.click(); return; }
+  }
   open.forEach(m => { m.classList.remove('open'); const b = m.querySelector('[aria-expanded]'); if (b) { b.setAttribute('aria-expanded', 'false'); b.focus(); } }); });
 app.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.wauth-form')) { e.preventDefault(); ACT.wauth(); } });
 
@@ -329,7 +334,8 @@ Object.assign(SCREENS, {
 
   wLevel(p) {
     const g = p.g in GEN ? p.g : 'psy', L = lv()[g];
-    return page('', `<div class="wtitle">${kick(GEN[g].n)}<h1 class="d wh1">Your level</h1><p class="txt t2">Here is what each level means. Feel braver or less brave? Pick one yourself.</p></div>
+    return page('', `<button class="wclose" data-act="wclose" aria-label="Close"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
+      <div class="wtitle">${kick(GEN[g].n)}<h1 class="d wh1">Your level</h1><p class="txt t2">Here is what each level means. Feel braver or less brave? Pick one yourself.</p></div>
       <div class="wh-tabs wlv-tabs" role="tablist">${ORDER.map(k => `<button role="tab" class="wh-tab ${k === g ? 'on' : ''}" data-act="wlvg" data-g="${k}" aria-selected="${k === g}"><span class="d">${GEN[k].n}</span>${stars(lv()[k])}</button>`).join('')}</div>
       <div class="wlv-cols">${[1, 2, 3].map(n => {
         const ex = FILMS.filter(f => f.g.includes(g) && f.lv === n).slice(0, 3), on = n === L, just = +p.just === n;
@@ -339,7 +345,7 @@ Object.assign(SCREENS, {
           <p class="small t3">Like these</p>
           <div class="wlv-ex">${ex.map(f => `<button class="poster ${f.poster ? 'has-art' : ''}" style="${posterBg(f.id)}" data-go="wFilm" data-id="${f.id}" aria-label="${esc(f.t)}">${art(f)}<span class="pt">${esc(f.t)}</span></button>`).join('')}</div>
           ${on ? '' : `<button class="btn2 sm" data-act="setlv" data-g="${g}" data-v="${n}">Set to ${'★'.repeat(n)}</button>`}
-        </div>`; }).join('')}</div>`, '', true);
+        </div>`; }).join('')}</div>`);
   },
 
   wSettings(p) {
